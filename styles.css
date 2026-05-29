@@ -1,0 +1,1017 @@
+/* -------------------------------------------------------------
+ * Premium Real Estate Plot Mapping & CAD Engine Design System
+ * ------------------------------------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    /* Theme Variables - Default to Sleek Dark */
+    --bg-main: #0a0c10;
+    --bg-surface: rgba(20, 24, 33, 0.7);
+    --bg-surface-opaque: #141821;
+    --bg-panel: rgba(15, 18, 25, 0.85);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.16);
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    
+    /* Branding Colors */
+    --primary: #6366f1;
+    --primary-glow: rgba(99, 102, 241, 0.3);
+    --accent: #8b5cf6;
+    --accent-glow: rgba(139, 92, 246, 0.2);
+    
+    /* Plot Status Colors */
+    --color-available: #10b981;
+    --color-available-glow: rgba(16, 185, 129, 0.15);
+    --color-available-border: rgba(16, 185, 129, 0.4);
+    
+    --color-reserved: #f59e0b;
+    --color-reserved-glow: rgba(245, 158, 11, 0.15);
+    --color-reserved-border: rgba(245, 158, 11, 0.4);
+    
+    --color-sold: #ef4444;
+    --color-sold-glow: rgba(239, 68, 68, 0.1);
+    --color-sold-border: rgba(239, 68, 68, 0.3);
+    
+    --color-premium: #a855f7;
+    --color-premium-glow: rgba(168, 85, 247, 0.15);
+    --color-premium-border: rgba(168, 85, 247, 0.4);
+
+    /* UI Measurements */
+    --sidebar-width: 420px;
+    --editor-width: 380px;
+    --header-height: 70px;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    
+    /* Animations */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* CAD Grid Color */
+    --grid-major: rgba(255, 255, 255, 0.04);
+    --grid-minor: rgba(255, 255, 255, 0.015);
+    --road-color: rgba(255, 255, 255, 0.05);
+}
+
+/* -------------------------------------------------------------
+ * Theme Configurations
+ * ------------------------------------------------------------- */
+
+/* Blueprint Mode */
+[data-theme="blueprint"] {
+    --bg-main: #0b1d3a;
+    --bg-surface: rgba(19, 46, 92, 0.7);
+    --bg-surface-opaque: #132e5c;
+    --bg-panel: rgba(10, 30, 65, 0.85);
+    --border-color: rgba(0, 242, 254, 0.15);
+    --border-hover: rgba(0, 242, 254, 0.3);
+    --text-primary: #e0f2fe;
+    --text-secondary: #7dd3fc;
+    --text-muted: #38bdf8;
+    
+    --primary: #00f2fe;
+    --primary-glow: rgba(0, 242, 254, 0.35);
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.2);
+    
+    --grid-major: rgba(0, 242, 254, 0.08);
+    --grid-minor: rgba(0, 242, 254, 0.03);
+    --road-color: rgba(0, 242, 254, 0.06);
+}
+
+/* Technical CAD Mode (Light/Precision) */
+[data-theme="cad"] {
+    --bg-main: #f4f6fa;
+    --bg-surface: rgba(255, 255, 255, 0.8);
+    --bg-surface-opaque: #ffffff;
+    --bg-panel: rgba(248, 250, 252, 0.9);
+    --border-color: #cbd5e1;
+    --border-hover: #94a3b8;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    
+    --primary: #0f172a;
+    --primary-glow: rgba(15, 23, 42, 0.15);
+    --accent: #2563eb;
+    --accent-glow: rgba(37, 99, 235, 0.1);
+    
+    --grid-major: rgba(15, 23, 42, 0.06);
+    --grid-minor: rgba(15, 23, 42, 0.02);
+    --road-color: rgba(15, 23, 42, 0.04);
+}
+
+/* Luxury Gold Mode */
+[data-theme="luxury"] {
+    --bg-main: #0c0b0a;
+    --bg-surface: rgba(24, 21, 18, 0.7);
+    --bg-surface-opaque: #1c1815;
+    --bg-panel: rgba(18, 16, 14, 0.85);
+    --border-color: rgba(212, 175, 55, 0.15);
+    --border-hover: rgba(212, 175, 55, 0.3);
+    --text-primary: #fdfbf7;
+    --text-secondary: #d4c8b3;
+    --text-muted: #998a72;
+    
+    --primary: #d4af37;
+    --primary-glow: rgba(212, 175, 55, 0.25);
+    --accent: #f3e5ab;
+    --accent-glow: rgba(243, 229, 171, 0.15);
+    
+    --grid-major: rgba(212, 175, 55, 0.04);
+    --grid-minor: rgba(212, 175, 55, 0.015);
+    --road-color: rgba(212, 175, 55, 0.03);
+}
+
+/* -------------------------------------------------------------
+ * Core App Reset
+ * ------------------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
+}
+
+/* -------------------------------------------------------------
+ * Layout Structure
+ * ------------------------------------------------------------- */
+header {
+    height: var(--header-height);
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px var(--primary-glow);
+    color: white;
+}
+
+.logo-text h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.logo-text p {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* App Workspace Container */
+.app-container {
+    flex: 1;
+    display: flex;
+    height: calc(100vh - var(--header-height));
+    position: relative;
+    overflow: hidden;
+}
+
+/* -------------------------------------------------------------
+ * Sidebar Panels
+ * ------------------------------------------------------------- */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    z-index: 80;
+    overflow-y: auto;
+    transition: transform var(--transition-smooth);
+}
+
+.editor-panel {
+    width: var(--editor-width);
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    z-index: 80;
+    overflow-y: auto;
+    transition: transform var(--transition-smooth), opacity var(--transition-smooth);
+    position: relative;
+}
+
+.editor-panel.collapsed {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    height: 100%;
+}
+
+.panel-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex: 1;
+}
+
+/* -------------------------------------------------------------
+ * Controls & Forms
+ * ------------------------------------------------------------- */
+.search-filter-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.search-wrapper {
+    position: relative;
+}
+
+.search-wrapper input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px 10px 38px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: border-color var(--transition-fast);
+}
+
+.search-wrapper input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.search-wrapper svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-filter {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.btn-filter:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.btn-filter.active {
+    background: var(--primary-glow);
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+/* Form Groups */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color var(--transition-fast);
+    width: 100%;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Status Pill Styling */
+.status-indicator {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+}
+
+.status-indicator::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-available {
+    background: var(--color-available-glow);
+    color: var(--color-available);
+    border: 1px solid var(--color-available-border);
+}
+.status-available::before { background: var(--color-available); }
+
+.status-reserved {
+    background: var(--color-reserved-glow);
+    color: var(--color-reserved);
+    border: 1px solid var(--color-reserved-border);
+}
+.status-reserved::before { background: var(--color-reserved); }
+
+.status-sold {
+    background: var(--color-sold-glow);
+    color: var(--color-sold);
+    border: 1px solid var(--color-sold-border);
+}
+.status-sold::before { background: var(--color-sold); }
+
+.status-premium {
+    background: var(--color-premium-glow);
+    color: var(--color-premium);
+    border: 1px solid var(--color-premium-border);
+}
+.status-premium::before { background: var(--color-premium); }
+
+/* -------------------------------------------------------------
+ * Metrics Dashboard Cards
+ * ------------------------------------------------------------- */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary), var(--accent));
+}
+
+.metric-card h3 {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.metric-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------
+ * Map Workspace (Canvas) Area
+ * ------------------------------------------------------------- */
+.map-workspace {
+    flex: 1;
+    position: relative;
+    background-color: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.map-workspace:active {
+    cursor: grabbing;
+}
+
+.map-svg-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    user-select: none;
+}
+
+/* Interactive SVG Elements */
+#map-grid-pattern rect {
+    fill: url(#cad-grid);
+}
+
+.road-overlay {
+    fill: var(--road-color);
+    stroke: var(--border-color);
+    stroke-width: 1.5px;
+}
+
+/* Road Label styling */
+.road-label {
+    fill: var(--text-muted);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    pointer-events: none;
+}
+
+/* Plot SVG Polygons */
+.plot-polygon {
+    stroke-width: 2px;
+    transition: stroke var(--transition-fast), fill var(--transition-fast), stroke-width var(--transition-fast);
+    cursor: pointer;
+}
+
+/* Color states on map */
+.plot-polygon.state-available {
+    fill: rgba(16, 185, 129, 0.08);
+    stroke: rgba(16, 185, 129, 0.45);
+}
+.plot-polygon.state-available:hover {
+    fill: rgba(16, 185, 129, 0.16);
+    stroke: rgba(16, 185, 129, 0.8);
+}
+
+.plot-polygon.state-reserved {
+    fill: rgba(245, 158, 11, 0.08);
+    stroke: rgba(245, 158, 11, 0.45);
+}
+.plot-polygon.state-reserved:hover {
+    fill: rgba(245, 158, 11, 0.16);
+    stroke: rgba(245, 158, 11, 0.8);
+}
+
+.plot-polygon.state-sold {
+    fill: rgba(239, 68, 68, 0.08);
+    stroke: rgba(239, 68, 68, 0.4);
+}
+.plot-polygon.state-sold:hover {
+    fill: rgba(239, 68, 68, 0.14);
+    stroke: rgba(239, 68, 68, 0.7);
+}
+
+.plot-polygon.state-premium {
+    fill: rgba(168, 85, 247, 0.08);
+    stroke: rgba(168, 85, 247, 0.45);
+}
+.plot-polygon.state-premium:hover {
+    fill: rgba(168, 85, 247, 0.16);
+    stroke: rgba(168, 85, 247, 0.8);
+}
+
+/* Active Selected Plot highlight */
+.plot-polygon.selected {
+    fill: rgba(99, 102, 241, 0.18) !important;
+    stroke: var(--primary) !important;
+    stroke-width: 3.5px !important;
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
+}
+
+/* Plot Text Labels */
+.plot-label {
+    fill: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    transition: fill var(--transition-fast), font-size var(--transition-fast);
+}
+
+.plot-label-sub {
+    fill: var(--text-muted);
+    font-size: 8px;
+    font-weight: 500;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+/* When Zoom is too small, hide subtexts automatically via CSS */
+.map-scale-low .plot-label-sub {
+    display: none;
+}
+
+/* Vertex Boundary Drag Handles */
+.vertex-handle {
+    fill: #ffffff;
+    stroke: var(--primary);
+    stroke-width: 2px;
+    cursor: move;
+    transition: stroke-width var(--transition-fast), r var(--transition-fast);
+}
+
+.vertex-handle:hover {
+    fill: var(--primary);
+    stroke: #ffffff;
+    stroke-width: 3px;
+    r: 8px !important;
+    filter: drop-shadow(0 0 5px var(--primary));
+}
+
+.vertex-handle.active {
+    fill: var(--accent);
+    stroke: #ffffff;
+    r: 9px !important;
+}
+
+/* -------------------------------------------------------------
+ * Floating Toolbars & Controls
+ * ------------------------------------------------------------- */
+.floating-toolbar {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    z-index: 70;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-right: 1px solid var(--border-color);
+    padding-right: 8px;
+    margin-right: 4px;
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.btn-icon.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 10px var(--primary-glow);
+}
+
+/* Tooltip standard hovering visual */
+.custom-tooltip {
+    position: fixed;
+    background: rgba(15, 18, 25, 0.95);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity var(--transition-fast) ease;
+}
+
+.custom-tooltip.visible {
+    opacity: 1;
+}
+
+.tooltip-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
+    margin-bottom: 2px;
+}
+
+/* Quick Access Plot List inside Sidebar */
+.plot-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.plot-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.plot-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-hover);
+}
+
+.plot-item.selected {
+    background: var(--primary-glow);
+    border-color: var(--primary);
+}
+
+.plot-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.plot-item-id {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.plot-item-area {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Standard Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border: none;
+    color: white;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--primary-glow);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-hover);
+}
+
+/* Theme Selector Select styling */
+.theme-selector {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.theme-selector:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+/* Empty State Styling for selected plot */
+.empty-selection-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    gap: 16px;
+    flex: 1;
+}
+
+.empty-selection-state svg {
+    color: var(--border-hover);
+}
+
+/* Import / Export utility block */
+.import-export-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* CAD Hatch Patterns Overlay */
+.cad-hatch {
+    fill: url(#diagonal-hatch) !important;
+}
+
+/* Compass and Scale Controls (Bottom Left Overlay) */
+.map-indicator-overlay {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(12px);
+    z-index: 70;
+}
+
+.compass-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.compass-icon {
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compass-pointer {
+    width: 2px;
+    height: 10px;
+    background: #ef4444; /* North pointer red */
+    position: absolute;
+    top: 2px;
+    border-radius: 1px;
+}
+
+.scale-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+    padding-top: 6px;
+    margin-top: 2px;
+}
+
+.scale-bar {
+    width: 60px;
+    height: 4px;
+    background: var(--text-muted);
+    position: relative;
+}
+
+.scale-bar::before, .scale-bar::after {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 8px;
+    background: var(--text-muted);
+    top: -2px;
+}
+.scale-bar::before { left: 0; }
+.scale-bar::after { right: 0; }
+
+/* -------------------------------------------------------------
+ * Toast Notifications
+ * ------------------------------------------------------------- */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10000;
+}
+
+.toast {
+    background: var(--bg-surface-opaque);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all var(--transition-smooth);
+}
+
+.toast.visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-success { border-left-color: var(--color-available); }
+.toast-warning { border-left-color: var(--color-reserved); }
+.toast-error { border-left-color: var(--color-sold); }
+
+/* Quick responsive fixes */
+@media(max-width: 1024px) {
+    .app-container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .sidebar, .editor-panel {
+        width: 100% !important;
+        height: auto !important;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .map-workspace {
+        height: 500px;
+        min-height: 500px;
+    }
+}

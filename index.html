@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEROSTAGE - Real Estate Interactive CAD Layout Planner</title>
+    <!-- Premium CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-theme="dark">
+
+    <!-- Premium App Header -->
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">
+                <i data-lucide="map"></i>
+            </div>
+            <div class="logo-text">
+                <h1>AEROSTAGE CAD</h1>
+                <p>Interactive Real Estate Layout Engine</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <!-- CAD Style Theme Selector -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">CANVAS VIEW:</span>
+                <select id="theme-selector" class="theme-selector">
+                    <option value="dark">Sleek Dark Mode</option>
+                    <option value="blueprint">Blueprint Grid</option>
+                    <option value="cad">Technical CAD</option>
+                    <option value="luxury">Luxury Gold</option>
+                </select>
+            </div>
+
+            <button id="btn-reset-map" class="btn-secondary" title="Reset map to default values">
+                <i data-lucide="refresh-cw"></i> Reset Database
+            </button>
+            
+            <button id="btn-export-json" class="btn-primary">
+                <i data-lucide="download"></i> Export JSON
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="app-container">
+        
+        <!-- Left Sidebar: Explorer & Analytics Dashboard -->
+        <aside class="sidebar">
+            <!-- Global KPIs Section -->
+            <div class="panel-header">
+                <h2><i data-lucide="bar-chart-3"></i> Layout Analytics</h2>
+            </div>
+            
+            <div class="panel-content" style="gap: 16px;">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>Portfolio Value</h3>
+                        <div id="metric-total-value" class="metric-value">$0.00</div>
+                        <div id="metric-value-sub" class="metric-sub">0% occupancy valuation</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Available Plots</h3>
+                        <div id="metric-available" class="metric-value">0 / 0</div>
+                        <div id="metric-available-sub" class="metric-sub">0% sqm available</div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>Total Surface Area</h3>
+                        <div id="metric-total-area" class="metric-value">0.00 m²</div>
+                        <div class="metric-sub">Across all layout vectors</div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Sales Velocity</h3>
+                        <div id="metric-sold-ratio" class="metric-value">0%</div>
+                        <div id="metric-sold-sub" class="metric-sub">0 sold, 0 reserved</div>
+                    </div>
+                </div>
+
+                <!-- Searching and Filtering tools -->
+                <div class="search-filter-box">
+                    <div class="search-wrapper">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="search-plots" placeholder="Search by Plot ID or owner...">
+                    </div>
+                    <div class="filter-row">
+                        <button class="btn-filter active" data-filter="all">All</button>
+                        <button class="btn-filter" data-filter="available">Available</button>
+                        <button class="btn-filter" data-filter="reserved">Reserved</button>
+                        <button class="btn-filter" data-filter="sold">Sold</button>
+                        <button class="btn-filter" data-filter="premium">Premium</button>
+                    </div>
+                </div>
+
+                <!-- Plot Quick Selection List -->
+                <div class="form-group" style="margin-top: 10px;">
+                    <label style="display: flex; justify-content: space-between;">
+                        <span>Plot Inventory Explorer</span>
+                        <span id="plot-list-count" style="color: var(--text-muted); font-size: 0.75rem;">Showing 0 plots</span>
+                    </label>
+                    <div id="plot-quick-list" class="plot-list-container">
+                        <!-- Loaded dynamically in app.js -->
+                    </div>
+                </div>
+
+                <!-- Reference Sketch Overlay Tracing Tools -->
+                <div class="search-filter-box" style="margin-top: 10px;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="image" style="width: 16px; height: 16px;"></i> Reference Sketch Tracing
+                    </span>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <button id="btn-trigger-ref-image" class="btn-secondary" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;">
+                            <i data-lucide="image-plus"></i> Upload Sketch
+                        </button>
+                        <input type="file" id="ref-image-input" accept="image/*" style="display: none;">
+                        <button id="btn-clear-ref-image" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; display: none;" title="Remove Overlay">
+                            <i data-lucide="image-off"></i>
+                        </button>
+                    </div>
+
+                    <!-- Opacity and scaling sliders -->
+                    <div id="ref-controls-container" style="display: none; flex-direction: column; gap: 8px; margin-top: 6px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                        <div class="form-group" style="gap: 4px;">
+                            <label style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+                                <span>Overlay Opacity</span>
+                                <span id="label-ref-opacity">50%</span>
+                            </label>
+                            <input type="range" id="ref-image-opacity" min="0" max="1" step="0.05" value="0.5" style="height: 4px; padding: 0; cursor: pointer;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div class="form-group" style="gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-secondary);">Width Scale (m)</label>
+                                <input type="number" id="ref-image-width" value="1200" step="50" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.3);">
+                            </div>
+                            <div class="form-group" style="gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-secondary);">Height Scale (m)</label>
+                                <input type="number" id="ref-image-height" value="800" step="50" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.3);">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div class="form-group" style="gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-secondary);">Offset X (px)</label>
+                                <input type="number" id="ref-image-x" value="100" step="10" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.3);">
+                            </div>
+                            <div class="form-group" style="gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-secondary);">Offset Y (px)</label>
+                                <input type="number" id="ref-image-y" value="100" step="10" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(0,0,0,0.3);">
+                            </div>
+                        </div>
+
+                        <!-- CAD Auto-Vectorizer Settings -->
+                        <div style="border-top: 1px dashed var(--border-color); margin-top: 8px; padding-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="scan-line" style="width: 14px; height: 14px;"></i> CAD Auto-Vectorizer
+                            </span>
+                            
+                            <div class="form-group" style="gap: 4px;">
+                                <label style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary);">
+                                    <span>Line Threshold</span>
+                                    <span id="label-vectorizer-threshold">130</span>
+                                </label>
+                                <input type="range" id="vectorizer-threshold" min="30" max="220" value="130" style="height: 4px; padding: 0; cursor: pointer;">
+                                <label style="font-size: 0.65rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; cursor: pointer; user-select: none;">
+                                    <input type="checkbox" id="vectorizer-preview-mask" style="width: 10px; height: 10px; cursor: pointer;"> Show Binarized Line Mask
+                                </label>
+                            </div>
+
+                            <div class="form-group" style="gap: 4px; margin-top: 4px;">
+                                <label style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary);">
+                                    <span>Line Gap Seal (Dilation)</span>
+                                    <span id="label-vectorizer-dilation">2 px</span>
+                                </label>
+                                <input type="range" id="vectorizer-dilation" min="1" max="5" step="1" value="2" style="height: 4px; padding: 0; cursor: pointer;">
+                            </div>
+
+                            <div class="form-group" style="gap: 4px;">
+                                <label style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary);">
+                                    <span>Corner Simplify (RDP)</span>
+                                    <span id="label-vectorizer-simplify">5.0</span>
+                                </label>
+                                <input type="range" id="vectorizer-simplify" min="1" max="25" step="0.5" value="5.0" style="height: 4px; padding: 0; cursor: pointer;">
+                            </div>
+
+                            <button id="btn-run-vectorizer" class="btn-primary" style="padding: 8px 12px; font-size: 0.8rem; margin-top: 4px; width: 100%;">
+                                <i data-lucide="cpu"></i> Run Auto-Vectorizer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Import Section -->
+                <div class="import-export-section" style="margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                    <button id="btn-trigger-import" class="btn-secondary" style="width: 100%;">
+                        <i data-lucide="upload"></i> Import Layout
+                    </button>
+                    <input type="file" id="file-import-input" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Viewport: Interactive SVG Canvas -->
+        <main class="map-workspace" id="canvas-workspace">
+            <!-- Floating Map Toolbar -->
+            <div class="floating-toolbar">
+                <!-- Navigation tools -->
+                <div class="toolbar-group">
+                    <button class="btn-icon active" id="tool-select" title="Select Tool">
+                        <i data-lucide="pointer"></i>
+                    </button>
+                    <button class="btn-icon" id="tool-pan" title="Pan Navigation Tool">
+                        <i data-lucide="move"></i>
+                    </button>
+                    <button class="btn-icon" id="btn-zoom-reset" title="Zoom Fit All">
+                        <i data-lucide="maximize"></i>
+                    </button>
+                </div>
+
+                <!-- CAD Editing Modes -->
+                <div class="toolbar-group">
+                    <button class="btn-icon" id="tool-edit-boundaries" title="Edit Plot Boundaries (Drag Corner Vertices)" disabled>
+                        <i data-lucide="pencil-ruler"></i>
+                    </button>
+                    <button class="btn-icon" id="tool-add-plot" title="Add New custom Plot Boundary">
+                        <i data-lucide="plus-circle"></i>
+                    </button>
+                    <button class="btn-icon" id="tool-delete-plot" title="Delete Selected Plot" disabled>
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+
+                <!-- Vector Layer Visibilities -->
+                <div class="toolbar-group" style="padding-right: 0; margin-right: 0;">
+                    <button class="btn-icon active" id="layer-labels" title="Toggle Plot Name Labels">
+                        <i data-lucide="type"></i>
+                    </button>
+                    <button class="btn-icon active" id="layer-roads" title="Toggle Roads Layer">
+                        <i data-lucide="milestone"></i>
+                    </button>
+                    <button class="btn-icon active" id="layer-grids" title="Toggle Blueprint Grid">
+                        <i data-lucide="grid-3x3"></i>
+                    </button>
+                    <button class="btn-icon active" id="layer-colors" title="Toggle Status Accent Colors">
+                        <i data-lucide="palette"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Compass and Scale Overlays -->
+            <div class="map-indicator-overlay">
+                <div class="compass-container">
+                    <div class="compass-icon">
+                        <div class="compass-pointer"></div>
+                    </div>
+                    <span>NORTH GRID</span>
+                </div>
+                <div class="scale-container">
+                    <div class="scale-bar"></div>
+                    <span>50 METERS</span>
+                </div>
+            </div>
+
+            <!-- SVG Container -->
+            <svg id="cad-canvas" class="map-svg-container" viewBox="0 0 1600 1000">
+                <!-- SVG nodes injected by map-renderer.js -->
+            </svg>
+
+            <!-- Custom floating visual tooltip -->
+            <div id="canvas-tooltip" class="custom-tooltip">
+                <!-- Filled dynamically by mouse events -->
+            </div>
+        </main>
+
+        <!-- Right Sidebar: Interactive Plot Metadata & CAD Editor -->
+        <aside id="editor-sidebar" class="editor-panel collapsed">
+            <div class="panel-header">
+                <h2 id="editor-title"><i data-lucide="sliders"></i> Plot Properties</h2>
+                <button id="btn-close-editor" class="btn-icon" title="Close Panel">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div id="editor-form-container" class="panel-content">
+                <!-- Selected Plot Details Form -->
+                <form id="plot-editor-form" onsubmit="event.preventDefault();">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="edit-plot-id">Plot Identifier (Editable Name)</label>
+                        <input type="text" id="edit-plot-id" required placeholder="e.g. 234/Premium">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Updates directly on map label instantly.</span>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="edit-plot-status">Sales Status</label>
+                            <select id="edit-plot-status">
+                                <option value="available">Available</option>
+                                <option value="reserved">Reserved</option>
+                                <option value="sold">Sold</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-plot-area">Surface Area (m²)</label>
+                            <input type="number" id="edit-plot-area" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="edit-plot-price">Price ($ per m²)</label>
+                            <input type="number" id="edit-plot-price" step="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Value</label>
+                            <input type="text" id="edit-plot-total-val" readonly style="opacity: 0.7;" value="$0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="edit-plot-owner">Current Registered Owner</label>
+                        <input type="text" id="edit-plot-owner" placeholder="Unregistered / Available">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label for="edit-plot-notes">Layout Description & Notes</label>
+                        <textarea id="edit-plot-notes" placeholder="Enter special features, geological survey remarks, etc."></textarea>
+                    </div>
+
+                    <!-- CAD Geometry Points Explorer -->
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Polygon Coordinates Table</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Double click point to delete</span>
+                        </label>
+                        <div style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: rgba(0,0,0,0.2);">
+                            <table style="width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; border-collapse: collapse; text-align: left;">
+                                <thead style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color); position: sticky; top: 0;">
+                                    <tr>
+                                        <th style="padding: 6px 12px; font-weight: 500;">Vertex</th>
+                                        <th style="padding: 6px 12px; font-weight: 500;">Coordinate X</th>
+                                        <th style="padding: 6px 12px; font-weight: 500;">Coordinate Y</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="geometry-nodes-tbody">
+                                    <!-- Populated dynamically by script -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Click the <strong>Edit Boundaries tool <i data-lucide="pencil-ruler" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i></strong> on the toolbar to drag nodes directly.</span>
+                    </div>
+
+                    <!-- Save and Actions Block -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="btn-save-properties" class="btn-primary" style="width: 100%;">
+                            <i data-lucide="check-circle-2"></i> Save Metadata Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Empty Selection State Overlay -->
+            <div id="editor-empty-state" class="empty-selection-state">
+                <i data-lucide="pointer" style="width: 48px; height: 48px;"></i>
+                <div>
+                    <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 4px;">No Plot Selected</h3>
+                    <p style="font-size: 0.85rem;">Click any parcel polygon on the visual map or use the inventory list to view and customize dimensions.</p>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts Injection -->
+    <!-- Tesseract.js pure CDN -->
+    <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+    <script src="map-data.js"></script>
+    <script src="vectorizer-engine.js"></script>
+    <script src="map-renderer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

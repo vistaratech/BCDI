@@ -1,0 +1,24 @@
+{
+  "name": "aerostage-real-estate-cad",
+  "version": "1.0.0",
+  "description": "Interactive Real Estate Plot Map and CAD Layout Editor",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": [
+    "real-estate",
+    "cad",
+    "map",
+    "svg",
+    "interactive",
+    "editor"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
