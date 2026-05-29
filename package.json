@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "@vitejs/plugin-react": "^6.0.2",
+    "vite": "^8.0.14"
   },
   "keywords": [
     "real-estate",
@@ -20,5 +21,10 @@
     "editor"
   ],
   "author": "Antigravity",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "lucide-react": "^1.17.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
 }

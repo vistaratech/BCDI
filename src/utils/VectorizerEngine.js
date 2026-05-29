@@ -427,4 +427,4 @@ class VectorizerEngine {
 }
 
 // Bind globally
-window.VectorizerEngine = VectorizerEngine;
+export default VectorizerEngine;

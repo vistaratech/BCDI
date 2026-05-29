@@ -551,5 +551,4 @@ class MapRenderer {
     }
 }
 
-// Bind to window object for global availability
-window.MapRenderer = MapRenderer;
+export default MapRenderer;

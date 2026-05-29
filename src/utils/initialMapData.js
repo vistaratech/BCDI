@@ -440,5 +440,4 @@ const INITIAL_MAP_DATA = {
     ]
 };
 
-// Export to window object for pure global standard accessibility in modular browser SPA
-window.INITIAL_MAP_DATA = INITIAL_MAP_DATA;
+export default INITIAL_MAP_DATA;
