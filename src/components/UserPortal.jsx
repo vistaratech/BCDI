@@ -7,6 +7,7 @@ import {
     User, 
     Search, 
     ChevronRight, 
+    ChevronLeft,
     ClipboardCheck, 
     ArrowLeft, 
     Phone, 
@@ -72,6 +73,7 @@ export default function UserPortal({
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all'); // 'all', 'available', 'premium'
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     const [layers, setLayers] = useState({ labels: true, roads: true, grids: false, statusColors: true });
     const [currentTool, setCurrentTool] = useState("select");
@@ -384,7 +386,7 @@ export default function UserPortal({
                     </div>
 
                     {/* Nav tabs bar */}
-                    <div style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
+                    <div className="mobile-hide-nav-tabs" style={{ display: 'flex', gap: '4px', marginLeft: '12px' }}>
                         {[
                             { id: 'home', label: 'Home', icon: <Home size={14} /> },
                             { id: 'layouts', label: 'Layout Maps', icon: <Map size={14} /> },
@@ -428,7 +430,7 @@ export default function UserPortal({
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="mobile-hide-session" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     {activeUserPhone && (
                         <div style={{ 
                             display: 'flex', 
@@ -482,7 +484,7 @@ export default function UserPortal({
                 
                 {/* 1. HOME TAB */}
                 {activeTab === 'home' && (
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '40px' }} className="animate-fade-in">
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '40px' }} className="animate-fade-in home-tab-content">
                         
                         {/* Hero Section Banner */}
                         <div className="hero-banner" style={{
@@ -508,7 +510,7 @@ export default function UserPortal({
                                     Explore authentic layout plans across South India. Check real-time plot availability, sizes, prices, and reserve your subdivision parcel instantly with a cinema-ticket style interface.
                                 </p>
                                 
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '12px' }}>
+                                <div className="hero-cta-row" style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '12px' }}>
                                     <button 
                                         className="btn-primary" 
                                         onClick={() => { setActiveTab('layouts'); setIsExploring(false); }}
@@ -528,7 +530,7 @@ export default function UserPortal({
                         </div>
 
                         {/* Global Statistics KPIs Row */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', flexShrink: 0 }}>
+                        <div className="kpi-grid-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', flexShrink: 0 }}>
                             <div className="kpi-card" style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <div style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', padding: '12px', borderRadius: '50%' }}>
                                     <Building2 size={24} />
@@ -570,7 +572,7 @@ export default function UserPortal({
                             </div>
 
                             {promoVideos.length > 0 ? (
-                                <div style={{ 
+                                <div className="video-section-grid" style={{ 
                                     display: 'grid', 
                                     gridTemplateColumns: '1.6fr 1fr', 
                                     gap: '24px',
@@ -603,7 +605,7 @@ export default function UserPortal({
                                     </div>
 
                                     {/* Right: Playlist / Selection cards */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
+                                    <div className="video-playlist-column" style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
                                         {promoVideos.map((video, idx) => {
                                             const isActive = idx === activeVideo;
                                             return (
@@ -668,7 +670,7 @@ export default function UserPortal({
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+                            <div className="ads-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                                 
                                 {/* Ad 1: Vijayamangalam Main Road */}
                                 <div className="ad-card" style={{
@@ -838,7 +840,7 @@ export default function UserPortal({
                                         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Select your state and district to view matching housing layout sheets.</p>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div className="location-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                         <div className="form-group">
                                             <label>Select State</label>
                                             <select 
@@ -930,8 +932,8 @@ export default function UserPortal({
                             </div>
                         ) : (
                             /* Map Explorer page */
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-                                <div style={{ 
+                            <div className="map-explorer-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                                <div className="map-explorer-header" style={{ 
                                     background: 'var(--bg-panel)', 
                                     borderBottom: '1px solid var(--border-color)', 
                                     display: 'flex', 
@@ -944,7 +946,7 @@ export default function UserPortal({
                                     flexWrap: 'wrap'
                                 }}>
                                     {/* Left: Navigation and Location info */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <button 
                                             className="btn-secondary" 
                                             onClick={() => {
@@ -963,7 +965,7 @@ export default function UserPortal({
                                     </div>
 
                                     {/* Center: Booking Occupancy Progress Bar */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                    <div className="header-center" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                                         <Building2 size={12} style={{ color: 'var(--primary)' }} />
                                         <span>Occupancy:</span>
                                         <strong style={{ color: 'var(--text-primary)' }}>
@@ -980,9 +982,9 @@ export default function UserPortal({
                                     </div>
 
                                     {/* Right: Status Legend Indicators & Filter Selector */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                         {/* Status legends */}
-                                        <div style={{ display: 'flex', gap: '10px', fontSize: '0.68rem', fontWeight: 600 }}>
+                                        <div className="status-legends" style={{ display: 'flex', gap: '10px', fontSize: '0.68rem', fontWeight: 600 }}>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-available)' }}>
                                                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-available)' }} /> Avail ({plotsCount.available})
                                             </span>
@@ -1025,10 +1027,10 @@ export default function UserPortal({
                                 </div>
 
                                 {/* Main Map and Checkout workspace split */}
-                                <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+                                <div className="map-explorer-workspace" style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
                                     {/* Left Sidebar: Plots Directory */}
                                     <aside className="plots-sidebar" style={{
-                                        width: '280px',
+                                        width: sidebarCollapsed ? '70px' : '280px',
                                         flexShrink: 0,
                                         borderRight: '1px solid var(--border-color)',
                                         background: 'var(--bg-panel)',
@@ -1036,125 +1038,181 @@ export default function UserPortal({
                                         flexDirection: 'column',
                                         height: '100%',
                                         zIndex: 40,
-                                        overflow: 'hidden'
+                                        overflow: 'hidden',
+                                        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                                     }}>
-                                        {/* Sidebar Header with Title & Count */}
-                                        <div style={{
-                                            padding: '16px 20px',
-                                            borderBottom: '1px solid var(--border-color)',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '8px'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.5px', margin: 0 }}>
-                                                    PLOTS DIRECTORY
-                                                </h3>
-                                                <span style={{ 
-                                                    fontSize: '0.7rem', 
-                                                    color: 'var(--primary)', 
-                                                    background: 'var(--primary-glow)', 
-                                                    padding: '2px 8px', 
-                                                    borderRadius: '10px',
-                                                    fontWeight: 700
-                                                }}>
-                                                    {filteredPlots.length} Plots
-                                                </span>
-                                            </div>
-                                            
-                                            {/* Search box input */}
-                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                                <Search size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Search plot number..." 
-                                                    value={searchQuery}
-                                                    onChange={e => setSearchQuery(e.target.value)}
-                                                    style={{
-                                                        width: '100%',
-                                                        padding: '8px 12px 8px 34px',
-                                                        fontSize: '0.8rem',
-                                                        borderRadius: 'var(--radius-sm)',
-                                                        background: 'var(--bg-input)',
-                                                        border: '1px solid var(--border-color)',
-                                                        color: 'var(--text-primary)',
-                                                        outline: 'none',
-                                                        transition: 'border-color 0.2s ease'
-                                                    }}
-                                                    className="sidebar-search-input"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Scrollable Plots List */}
-                                        <div style={{
-                                            flex: 1,
-                                            overflowY: 'auto',
-                                            padding: '12px 16px',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '8px'
-                                        }} className="custom-scrollbar">
-                                            {filteredPlots.length === 0 ? (
-                                                <div style={{ 
-                                                    textAlign: 'center', 
-                                                    padding: '40px 10px', 
-                                                    color: 'var(--text-muted)', 
-                                                    fontSize: '0.78rem' 
-                                                }}>
-                                                    No matching plots found
+                                        {sidebarCollapsed ? (
+                                            /* Collapsed Narrow View */
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '16px 6px', overflowY: 'auto' }} className="custom-scrollbar">
+                                                <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center', marginBottom: '8px', borderBottom: '1px solid var(--border-color)', width: '100%', paddingBottom: '6px' }}>
+                                                    PLOTS
                                                 </div>
-                                            ) : (
-                                                filteredPlots.map(p => {
-                                                    const isSelected = userSelectedPlotId === p.id;
-                                                    return (
-                                                        <div
-                                                            key={p.id}
-                                                            onClick={() => handleSelectPlot(p.id)}
-                                                            className={`plot-list-item ${isSelected ? 'selected' : ''}`}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                                                    {filteredPlots.map(p => {
+                                                        const isSelected = userSelectedPlotId === p.id;
+                                                        return (
+                                                            <button
+                                                                key={p.id}
+                                                                onClick={() => handleSelectPlot(p.id)}
+                                                                title={p.id}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px 2px',
+                                                                    fontSize: '0.8rem',
+                                                                    fontWeight: 800,
+                                                                    borderRadius: '4px',
+                                                                    background: isSelected ? 'var(--primary)' : 'var(--bg-surface)',
+                                                                    color: isSelected ? '#ffffff' : 'var(--text-primary)',
+                                                                    border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                                                                    cursor: 'pointer',
+                                                                    textAlign: 'center',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                            >
+                                                                {p.id.replace(/^(?:plot|lot|p|l)?\s*[-._\s]\s*/i, '').trim()}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Full Sidebar Content */
+                                            <>
+                                                {/* Sidebar Header with Title & Count */}
+                                                <div style={{
+                                                    padding: '16px 20px',
+                                                    borderBottom: '1px solid var(--border-color)',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '8px'
+                                                }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.5px', margin: 0 }}>
+                                                            PLOTS DIRECTORY
+                                                        </h3>
+                                                        <span style={{ 
+                                                            fontSize: '0.7rem', 
+                                                            color: 'var(--primary)', 
+                                                            background: 'var(--primary-glow)', 
+                                                            padding: '2px 8px', 
+                                                            borderRadius: '10px',
+                                                            fontWeight: 700
+                                                        }}>
+                                                            {filteredPlots.length} Plots
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    {/* Search box input */}
+                                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                        <Search size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Search plot number..." 
+                                                            value={searchQuery}
+                                                            onChange={e => setSearchQuery(e.target.value)}
                                                             style={{
-                                                                padding: '12px 14px',
-                                                                background: isSelected ? 'var(--primary-glow)' : 'rgba(255,255,255,0.01)',
-                                                                border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                                                                width: '100%',
+                                                                padding: '8px 12px 8px 34px',
+                                                                fontSize: '0.8rem',
                                                                 borderRadius: 'var(--radius-sm)',
-                                                                cursor: 'pointer',
-                                                                display: 'flex',
-                                                                justifyContent: 'space-between',
-                                                                alignItems: 'center',
-                                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                                background: 'var(--bg-input)',
+                                                                border: '1px solid var(--border-color)',
+                                                                color: 'var(--text-primary)',
+                                                                outline: 'none',
+                                                                transition: 'border-color 0.2s ease'
                                                             }}
-                                                        >
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                                <span style={{ 
-                                                                    fontSize: '0.85rem', 
-                                                                    fontWeight: 700, 
-                                                                    color: isSelected ? 'var(--primary)' : 'var(--text-primary)' 
-                                                                }}>
-                                                                    {p.id}
-                                                                </span>
-                                                                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                                                                    {p.area ? `${p.area.toFixed(1)} m²` : 'N/A'}
-                                                                </span>
-                                                            </div>
-                                                            
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                <span className={`status-badge-pill badge-${p.status}`} style={{
-                                                                    fontSize: '0.62rem',
-                                                                    fontWeight: 700,
-                                                                    padding: '2px 8px',
-                                                                    borderRadius: '20px',
-                                                                    textTransform: 'uppercase',
-                                                                    letterSpacing: '0.2px'
-                                                                }}>
-                                                                    {p.status}
-                                                                </span>
-                                                            </div>
+                                                            className="sidebar-search-input"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Scrollable Plots List */}
+                                                <div style={{
+                                                    flex: 1,
+                                                    overflowY: 'auto',
+                                                    padding: '12px 16px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '8px'
+                                                }} className="custom-scrollbar">
+                                                    {filteredPlots.length === 0 ? (
+                                                        <div style={{ 
+                                                            textAlign: 'center', 
+                                                            padding: '40px 10px', 
+                                                            color: 'var(--text-muted)', 
+                                                            fontSize: '0.78rem' 
+                                                        }}>
+                                                            No matching plots found
                                                         </div>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
+                                                    ) : (
+                                                        filteredPlots.map(p => {
+                                                            const isSelected = userSelectedPlotId === p.id;
+                                                            return (
+                                                                <div
+                                                                    key={p.id}
+                                                                    onClick={() => handleSelectPlot(p.id)}
+                                                                    className={`plot-list-item ${isSelected ? 'selected' : ''}`}
+                                                                    style={{
+                                                                        padding: '12px 14px',
+                                                                        background: isSelected ? 'var(--primary-glow)' : 'rgba(255,255,255,0.01)',
+                                                                        border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                                                                        borderRadius: 'var(--radius-sm)',
+                                                                        cursor: 'pointer',
+                                                                        display: 'flex',
+                                                                        justifyContent: 'space-between',
+                                                                        alignItems: 'center',
+                                                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                                    }}
+                                                                >
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                        <span style={{ 
+                                                                            fontSize: '0.85rem', 
+                                                                            fontWeight: 700, 
+                                                                            color: isSelected ? 'var(--primary)' : 'var(--text-primary)' 
+                                                                        }}>
+                                                                            {p.id}
+                                                                        </span>
+                                                                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                                                                            {p.area ? `${p.area.toFixed(1)} m²` : 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                        <span className={`status-badge-pill badge-${p.status}`} style={{
+                                                                            fontSize: '0.62rem',
+                                                                            fontWeight: 700,
+                                                                            padding: '2px 8px',
+                                                                            borderRadius: '20px',
+                                                                            textTransform: 'uppercase',
+                                                                            letterSpacing: '0.2px'
+                                                                        }}>
+                                                                            {p.status}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
                                     </aside>
+
+                                    {/* Sidebar Collapse handle button */}
+                                    <button 
+                                        className="sidebar-collapse-btn" 
+                                        style={{ 
+                                            left: sidebarCollapsed ? '69px' : '279px',
+                                            zIndex: 45
+                                        }}
+                                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                                        title={sidebarCollapsed ? "Expand Plots Sidebar" : "Collapse Plots Sidebar"}
+                                    >
+                                        {sidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+                                    </button>
 
                                     <MapWorkspace 
                                         mapData={activeLayout}
@@ -1394,7 +1452,7 @@ export default function UserPortal({
 
                 {/* 3. LOCATIONS DIRECTORY TAB */}
                 {activeTab === 'locations' && (
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="animate-fade-in">
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="animate-fade-in tab-content-scroll">
                         <div style={{ marginBottom: '24px' }}>
                             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>Locations Directory</h2>
                             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Browse land subdivision projects grouped by cities/districts in our database.</p>
@@ -1413,7 +1471,7 @@ export default function UserPortal({
                                             {stateName}
                                         </h3>
                                         
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                                        <div className="locations-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                                             {districts.map(distName => {
                                                 const layoutsInDist = database.layouts.filter(l => 
                                                     (l.state || "Tamil Nadu") === stateName && 
@@ -1487,7 +1545,7 @@ export default function UserPortal({
 
                 {/* 4. MY BOOKINGS / PROFILE TAB */}
                 {activeTab === 'profile' && (
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="animate-fade-in">
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="animate-fade-in tab-content-scroll">
                         <div style={{ marginBottom: '24px' }}>
                             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>My Bookings Dashboard</h2>
                             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>View, search, and manage your plot booking reservations and ticket receipts.</p>
@@ -1533,7 +1591,7 @@ export default function UserPortal({
                         ) : (
                             /* User Bookings results dashboard list */
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-panel)', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: 'var(--radius-md)' }}>
+                                <div className="bookings-profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-panel)', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: 'var(--radius-md)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{ background: 'var(--primary-glow)', color: 'var(--primary)', padding: '8px', borderRadius: '50%' }}>
                                             <User size={18} />
@@ -1552,7 +1610,7 @@ export default function UserPortal({
                                             )}
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div className="profile-actions" style={{ display: 'flex', gap: '8px' }}>
                                         <button className="btn-secondary" onClick={() => { setActiveTab('layouts'); setIsExploring(false); }} style={{ fontSize: '0.75rem', padding: '8px 14px' }}>
                                             Book another Plot
                                         </button>
@@ -1570,7 +1628,7 @@ export default function UserPortal({
                                     </div>
                                 ) : (
                                     /* Render visual tickets list */
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
+                                    <div className="bookings-tickets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
                                         {userBookings.map(b => (
                                             <div 
                                                 key={b.id}
@@ -1658,13 +1716,13 @@ export default function UserPortal({
 
                 {/* 5. SETTINGS TAB */}
                 {activeTab === 'settings' && (
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="animate-fade-in">
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px' }} className="animate-fade-in tab-content-scroll">
                         <div style={{ marginBottom: '24px' }}>
                             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>Preferences & Support</h2>
                             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Customize the portal theme view and get in touch with our help desk support team.</p>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                        <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                             {/* Theme select card */}
                             <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px' }}>Portal Interface Theme</h3>
@@ -1713,6 +1771,31 @@ export default function UserPortal({
                     </div>
                 )}
 
+            </div>
+
+            {/* Mobile Bottom Navigation Bar */}
+            <div className="mobile-bottom-nav">
+                {[
+                    { id: 'home', label: 'Home', icon: <Home size={20} /> },
+                    { id: 'layouts', label: 'Maps', icon: <Map size={20} /> },
+                    { id: 'locations', label: 'Locations', icon: <MapPin size={20} /> },
+                    { id: 'profile', label: 'Bookings', icon: <Ticket size={20} /> },
+                    { id: 'settings', label: 'Settings', icon: <Sliders size={20} /> },
+                ].map(t => (
+                    <button
+                        key={t.id}
+                        onClick={() => {
+                            setActiveTab(t.id);
+                            if (t.id !== 'layouts') {
+                                setIsExploring(false);
+                            }
+                        }}
+                        className={activeTab === t.id ? 'active' : ''}
+                    >
+                        {t.icon}
+                        <span>{t.label}</span>
+                    </button>
+                ))}
             </div>
 
             {/* Custom styling rules scoped to the portal */}
@@ -1820,6 +1903,256 @@ export default function UserPortal({
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: rgba(255, 255, 255, 0.2);
+                }
+
+                /* ============ MOBILE RESPONSIVE ============ */
+
+                /* --- Bottom navigation bar for mobile --- */
+                @media (max-width: 768px) {
+                    .user-portal-container {
+                        padding-bottom: 60px !important;
+                    }
+
+                    /* Navbar: shrink height, hide nav tabs and user session pill */
+                    .user-navbar {
+                        height: 52px !important;
+                        padding: 0 12px !important;
+                    }
+                    .user-navbar .mobile-hide-nav-tabs {
+                        display: none !important;
+                    }
+                    .user-navbar .mobile-hide-session {
+                        display: none !important;
+                    }
+
+                    /* Bottom tab bar */
+                    .mobile-bottom-nav {
+                        display: flex !important;
+                    }
+
+                    /* Home tab content */
+                    .home-tab-content {
+                        padding: 20px 12px !important;
+                        gap: 24px !important;
+                    }
+
+                    /* Hero banner */
+                    .hero-banner {
+                        padding: 32px 16px !important;
+                    }
+                    .hero-banner h1 {
+                        font-size: 1.4rem !important;
+                    }
+                    .hero-cta-row {
+                        flex-direction: column !important;
+                        gap: 8px !important;
+                    }
+                    .hero-cta-row button {
+                        width: 100% !important;
+                    }
+
+                    /* KPI cards grid */
+                    .kpi-grid-row {
+                        grid-template-columns: 1fr !important;
+                        gap: 12px !important;
+                    }
+                    .kpi-card {
+                        padding: 16px !important;
+                    }
+
+                    /* Video walkthrough section */
+                    .video-section-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 16px !important;
+                    }
+                    .video-playlist-column {
+                        max-height: 200px !important;
+                    }
+
+                    /* Ad cards grid */
+                    .ads-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 16px !important;
+                    }
+                    .ad-card {
+                        min-height: 220px !important;
+                    }
+
+                    /* Layout landing card */
+                    .portal-landing-container {
+                        padding: 20px 12px !important;
+                    }
+                    .portal-card {
+                        padding: 20px !important;
+                    }
+                    .portal-card .location-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+
+                    /* Map Explorer layout */
+                    .map-explorer-container {
+                        flex-direction: column !important;
+                        overflow-y: auto !important;
+                    }
+                    .map-explorer-header {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 8px !important;
+                        padding: 8px 12px !important;
+                    }
+                    .map-explorer-header .header-left {
+                        flex-wrap: wrap;
+                        gap: 6px !important;
+                    }
+                    .map-explorer-header .header-center {
+                        display: none !important;
+                    }
+                    .map-explorer-header .header-right {
+                        width: 100%;
+                        overflow-x: auto;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    .map-explorer-header .header-right .status-legends {
+                        display: none !important;
+                    }
+                    .map-explorer-workspace {
+                        flex-direction: column !important;
+                        height: auto !important;
+                        min-height: 0 !important;
+                    }
+
+                    /* Plots sidebar on mobile: hidden by default, show as overlay */
+                    .plots-sidebar {
+                        width: 100% !important;
+                        max-height: 180px !important;
+                        border-right: none !important;
+                        border-bottom: 1px solid var(--border-color) !important;
+                        flex-shrink: 0 !important;
+                    }
+                    .plots-sidebar-collapsed-mobile {
+                        max-height: 0 !important;
+                        overflow: hidden !important;
+                        padding: 0 !important;
+                        border: none !important;
+                    }
+
+                    /* Collapse toggle: hide on mobile */
+                    .sidebar-collapse-btn {
+                        display: none !important;
+                    }
+
+                    /* Map canvas */
+                    .map-canvas-wrapper {
+                        min-height: 300px !important;
+                        flex: 1 !important;
+                    }
+
+                    /* Booking details drawer on mobile */
+                    .editor-panel {
+                        position: fixed !important;
+                        bottom: 60px !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                        top: auto !important;
+                        width: 100% !important;
+                        max-height: 60vh !important;
+                        border-radius: 16px 16px 0 0 !important;
+                        z-index: 200 !important;
+                        box-shadow: 0 -8px 30px rgba(0,0,0,0.3) !important;
+                    }
+                    .editor-panel.collapsed {
+                        transform: translateY(100%) !important;
+                    }
+
+                    /* Locations directory */
+                    .locations-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 12px !important;
+                    }
+
+                    /* Bookings section */
+                    .bookings-profile-header {
+                        flex-direction: column !important;
+                        gap: 12px !important;
+                        text-align: center !important;
+                    }
+                    .bookings-profile-header .profile-actions {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                    .bookings-tickets-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 16px !important;
+                    }
+
+                    /* Settings grid */
+                    .settings-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 16px !important;
+                    }
+
+                    /* General tab content */
+                    .tab-content-scroll {
+                        padding: 20px 12px !important;
+                    }
+                }
+
+                /* Tablet breakpoint */
+                @media (min-width: 769px) and (max-width: 1024px) {
+                    .user-navbar .user-nav-item span {
+                        display: none;
+                    }
+                    .video-section-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+                    .editor-panel {
+                        width: 300px !important;
+                    }
+                    .plots-sidebar {
+                        width: 220px !important;
+                    }
+                }
+
+                /* Mobile bottom nav styling */
+                .mobile-bottom-nav {
+                    display: none;
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 60px;
+                    background: var(--bg-panel);
+                    border-top: 1px solid var(--border-color);
+                    z-index: 500;
+                    align-items: center;
+                    justify-content: space-around;
+                    padding: 0 8px;
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                }
+                .mobile-bottom-nav button {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 2px;
+                    padding: 6px 8px;
+                    border: none;
+                    background: transparent;
+                    color: var(--text-muted);
+                    font-size: 0.6rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    min-width: 52px;
+                }
+                .mobile-bottom-nav button.active {
+                    color: var(--primary);
+                    background: var(--primary-glow);
+                }
+                .mobile-bottom-nav button svg {
+                    width: 20px;
+                    height: 20px;
                 }
             `}} />
 

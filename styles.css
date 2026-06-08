@@ -220,6 +220,7 @@ header {
     flex-direction: column;
     z-index: 80;
     overflow-y: auto;
+    flex-shrink: 0 !important;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
                 padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
                 opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -1125,6 +1126,7 @@ header {
     gap: 20px;
     z-index: 90;
     backdrop-filter: blur(12px);
+    flex-shrink: 0;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
                 padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
                 opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -1132,13 +1134,11 @@ header {
 }
 
 .nav-sidebar.collapsed {
-    width: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    border-right: none !important;
-    opacity: 0;
-    pointer-events: none;
-    overflow: hidden;
+    width: 70px !important;
+    padding: 24px 10px !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    overflow: hidden !important;
 }
 
 .nav-brand {
@@ -1629,6 +1629,30 @@ header {
     opacity: 0;
     pointer-events: none;
     overflow: hidden;
+}
+
+.sidebar.collapsed-strip {
+    width: 70px !important;
+    padding: 16px 4px !important;
+    border-right: 1px solid var(--border-color) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sidebar.collapsed-strip::-webkit-scrollbar {
+    width: 3px;
+}
+.sidebar.collapsed-strip::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar.collapsed-strip::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
 }
 
 /* Toggle tab handle button */

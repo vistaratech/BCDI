@@ -251,6 +251,7 @@ export default function App() {
     const [toasts, setToasts] = useState([]);
 
     const refImageInput = useRef(null);
+    const uploadMetadataRef = useRef({ state: '', district: '', area: '' });
     const [modalConfig, setModalConfig] = useState(null);
 
     // OCR & Vectorizer States
@@ -438,6 +439,9 @@ export default function App() {
 
                     setMapData(prev => ({
                         ...prev,
+                        state: uploadMetadataRef.current.state ? uploadMetadataRef.current.state.trim() : prev.state,
+                        district: uploadMetadataRef.current.district ? uploadMetadataRef.current.district.trim() : prev.district,
+                        area: uploadMetadataRef.current.area ? uploadMetadataRef.current.area.trim() : prev.area,
                         backgroundImage: {
                             ...prev.backgroundImage,
                             href: dataUrl,
@@ -501,6 +505,9 @@ export default function App() {
 
                 setMapData(prev => ({
                     ...prev,
+                    state: uploadMetadataRef.current.state ? uploadMetadataRef.current.state.trim() : prev.state,
+                    district: uploadMetadataRef.current.district ? uploadMetadataRef.current.district.trim() : prev.district,
+                    area: uploadMetadataRef.current.area ? uploadMetadataRef.current.area.trim() : prev.area,
                     backgroundImage: {
                         ...prev.backgroundImage,
                         href: objectUrl,
@@ -534,6 +541,25 @@ export default function App() {
             };
             img.src = objectUrl;
         }
+    };
+
+    const triggerUploadWithMetadata = () => {
+        const activeLayout = layouts.find(l => l.id === activeLayoutId) || layouts[0];
+        setModalConfig({
+            type: 'upload_confirm',
+            title: 'Layout Location Details',
+            defaultValue: {
+                state: activeLayout.state || 'Tamil Nadu',
+                district: activeLayout.district || 'Erode',
+                area: activeLayout.area || 'Vijayamangalam'
+            },
+            onConfirm: (data) => {
+                uploadMetadataRef.current = data;
+                if (refImageInput.current) {
+                    refImageInput.current.click();
+                }
+            }
+        });
     };
 
     const triggerCreateNewLayout = () => {
@@ -832,7 +858,7 @@ export default function App() {
                     <button 
                         className="nav-collapse-btn" 
                         style={{ 
-                            left: `${navCollapsed ? 12 : 228}px`
+                            left: `${navCollapsed ? 58 : 228}px`
                         }}
                         onClick={() => setNavCollapsed(!navCollapsed)}
                         title={navCollapsed ? "Expand Navigation Sidebar" : "Collapse Navigation Sidebar"}
@@ -841,18 +867,28 @@ export default function App() {
                     </button>
 
                     {/* Navigation Sidebar */}
-                    <div className={`nav-sidebar ${navCollapsed ? 'collapsed' : ''}`}>
+                    <div className={`nav-sidebar ${navCollapsed ? 'collapsed' : ''}`} style={{ flexShrink: 0 }}>
                         <div className="nav-links" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <button className={`nav-item ${adminTab === 'dashboard' ? 'active' : ''}`} onClick={() => setAdminTab('dashboard')}><LayoutDashboard size={18} /> Dashboard</button>
+                            <button 
+                                className={`nav-item ${adminTab === 'dashboard' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('dashboard')}
+                                title={navCollapsed ? "Dashboard" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <LayoutDashboard size={18} />
+                                {!navCollapsed && <span>Dashboard</span>}
+                            </button>
                             
                             <div className="nav-item-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <button 
                                     className={`nav-item ${adminTab === 'layouts' ? 'active' : ''}`} 
                                     onClick={() => { setAdminTab('layouts'); setLayoutsMenuExpanded(!layoutsMenuExpanded); }}
-                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+                                    title={navCollapsed ? "Layouts" : undefined}
+                                    style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
                                 >
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Map size={18} /> Layouts
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: navCollapsed ? 0 : '8px', justifyContent: navCollapsed ? 'center' : 'flex-start', width: '100%' }}>
+                                        <Map size={18} />
+                                        {!navCollapsed && <span>Layouts</span>}
                                     </span>
                                     {!navCollapsed && (layoutsMenuExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
                                 </button>
@@ -884,7 +920,7 @@ export default function App() {
                                                 className="btn-secondary" 
                                                 style={{ padding: '6px', borderRadius: 'var(--radius-sm)', flex: 1, display: 'flex', justifyContent: 'center' }} 
                                                 title="Upload Reference Layout Image/PDF"
-                                                onClick={() => refImageInput.current.click()}
+                                                onClick={triggerUploadWithMetadata}
                                             >
                                                 <Upload size={12} />
                                             </button>
@@ -929,29 +965,95 @@ export default function App() {
                                 )}
                             </div>
 
-                            <button className={`nav-item ${adminTab === 'plots' ? 'active' : ''}`} onClick={() => setAdminTab('plots')}><Landmark size={18} /> Plots</button>
-                            <button className={`nav-item ${adminTab === 'bookings' ? 'active' : ''}`} onClick={() => setAdminTab('bookings')}><ClipboardList size={18} /> Bookings</button>
-                            <button className={`nav-item ${adminTab === 'videos' ? 'active' : ''}`} onClick={() => setAdminTab('videos')}><Video size={18} /> Videos</button>
-                            <button className={`nav-item ${adminTab === 'clients' ? 'active' : ''}`} onClick={() => setAdminTab('clients')}><Users size={18} /> Clients</button>
-                            <button className={`nav-item ${adminTab === 'reports' ? 'active' : ''}`} onClick={() => setAdminTab('reports')}><BarChart3 size={18} /> Reports</button>
-                            <button className={`nav-item ${adminTab === 'settings' ? 'active' : ''}`} onClick={() => setAdminTab('settings')}><Settings size={18} /> Settings</button>
-                            <button className="nav-item" onClick={() => {
-                                if (window.confirm("Are you sure you want to log out from BCDI Admin Panel?")) {
-                                    setRole('user');
-                                    window.location.href = '/';
-                                }
-                            }} style={{ marginTop: 'auto', marginBottom: '16px' }}><LogOut size={18} /> Logout</button>
+                             <button 
+                                className={`nav-item ${adminTab === 'plots' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('plots')}
+                                title={navCollapsed ? "Plots" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <Landmark size={18} />
+                                {!navCollapsed && <span>Plots</span>}
+                            </button>
+                            
+                            <button 
+                                className={`nav-item ${adminTab === 'bookings' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('bookings')}
+                                title={navCollapsed ? "Bookings" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <ClipboardList size={18} />
+                                {!navCollapsed && <span>Bookings</span>}
+                            </button>
+                            
+                            <button 
+                                className={`nav-item ${adminTab === 'videos' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('videos')}
+                                title={navCollapsed ? "Videos" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <Video size={18} />
+                                {!navCollapsed && <span>Videos</span>}
+                            </button>
+                            
+                            <button 
+                                className={`nav-item ${adminTab === 'clients' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('clients')}
+                                title={navCollapsed ? "Clients" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <Users size={18} />
+                                {!navCollapsed && <span>Clients</span>}
+                            </button>
+                            
+                            <button 
+                                className={`nav-item ${adminTab === 'reports' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('reports')}
+                                title={navCollapsed ? "Reports" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <BarChart3 size={18} />
+                                {!navCollapsed && <span>Reports</span>}
+                            </button>
+                            
+                            <button 
+                                className={`nav-item ${adminTab === 'settings' ? 'active' : ''}`} 
+                                onClick={() => setAdminTab('settings')}
+                                title={navCollapsed ? "Settings" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0 } : {}}
+                            >
+                                <Settings size={18} />
+                                {!navCollapsed && <span>Settings</span>}
+                            </button>
+                            
+                            <button 
+                                className="nav-item" 
+                                onClick={() => {
+                                    if (window.confirm("Are you sure you want to log out from BCDI Admin Panel?")) {
+                                        setRole('user');
+                                        window.location.href = '/';
+                                    }
+                                }} 
+                                title={navCollapsed ? "Logout" : undefined}
+                                style={navCollapsed ? { padding: '12px 0', justifyContent: 'center', gap: 0, marginTop: 'auto', marginBottom: '16px' } : { marginTop: 'auto', marginBottom: '16px' }}
+                            >
+                                <LogOut size={18} />
+                                {!navCollapsed && <span>Logout</span>}
+                            </button>
                             
                             {/* Project Switcher Profile Card at the bottom */}
-                            <div className="nav-profile-card">
+                            <div className="nav-profile-card" style={navCollapsed ? { padding: '10px 4px', justifyContent: 'center' } : {}}>
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', flexShrink: 0 }}>
                                     <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }} />
                                 </div>
-                                <div className="nav-profile-info">
-                                    <div className="nav-profile-title">BCDI Developers</div>
-                                    <div className="nav-profile-subtitle">growth is life...</div>
-                                </div>
-                                <ChevronDown size={16} className="nav-profile-chevron" />
+                                {!navCollapsed && (
+                                    <>
+                                        <div className="nav-profile-info">
+                                            <div className="nav-profile-title">BCDI Developers</div>
+                                            <div className="nav-profile-subtitle">growth is life...</div>
+                                        </div>
+                                        <ChevronDown size={16} className="nav-profile-chevron" />
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1032,7 +1134,7 @@ export default function App() {
                             {/* Custom Modal for Naming & Confirmations */}
                             {modalConfig && (
                                 <div className="custom-modal-overlay animate-fade-in">
-                                    <div className="custom-modal" style={modalConfig.type === 'edit_info' ? { maxWidth: '460px', width: '90%' } : {}}>
+                                    <div className="custom-modal" style={modalConfig.type === 'edit_info' || modalConfig.type === 'upload_confirm' ? { maxWidth: '460px', width: '90%' } : {}}>
                                         <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>{modalConfig.title}</h3>
                                         {modalConfig.type === 'edit_info' ? (
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
@@ -1077,6 +1179,39 @@ export default function App() {
                                                     />
                                                 </div>
                                             </div>
+                                        ) : modalConfig.type === 'upload_confirm' ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
+                                                <div className="form-group">
+                                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>State</label>
+                                                    <input 
+                                                        type="text" 
+                                                        id="upload-info-state"
+                                                        defaultValue={modalConfig.defaultValue.state}
+                                                        placeholder="e.g. Tamil Nadu"
+                                                        style={{ width: '100%', padding: '10px', fontSize: '0.85rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>District</label>
+                                                    <input 
+                                                        type="text" 
+                                                        id="upload-info-district"
+                                                        defaultValue={modalConfig.defaultValue.district}
+                                                        placeholder="e.g. Erode"
+                                                        style={{ width: '100%', padding: '10px', fontSize: '0.85rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Area / Project Location</label>
+                                                    <input 
+                                                        type="text" 
+                                                        id="upload-info-area"
+                                                        defaultValue={modalConfig.defaultValue.area}
+                                                        placeholder="e.g. Vijayamangalam"
+                                                        style={{ width: '100%', padding: '10px', fontSize: '0.85rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                                                    />
+                                                </div>
+                                            </div>
                                         ) : modalConfig.type !== 'delete' ? (
                                             <input 
                                                 type="text" 
@@ -1106,6 +1241,11 @@ export default function App() {
                                                         const district = document.getElementById("edit-info-district").value;
                                                         const area = document.getElementById("edit-info-area").value;
                                                         modalConfig.onConfirm({ name, state, district, area });
+                                                    } else if (modalConfig.type === 'upload_confirm') {
+                                                        const state = document.getElementById("upload-info-state").value;
+                                                        const district = document.getElementById("upload-info-district").value;
+                                                        const area = document.getElementById("upload-info-area").value;
+                                                        modalConfig.onConfirm({ state, district, area });
                                                     } else {
                                                         const input = document.getElementById("modal-input-field");
                                                         modalConfig.onConfirm(input ? input.value : undefined);
@@ -1114,18 +1254,17 @@ export default function App() {
                                                 }}
                                                 style={{ padding: '8px 16px', fontSize: '0.8rem', borderRadius: 'var(--radius-sm)' }}
                                             >
-                                                {modalConfig.type === 'delete' ? 'Delete' : 'Save'}
+                                                {modalConfig.type === 'delete' ? 'Delete' : modalConfig.type === 'upload_confirm' ? 'Proceed to Upload' : 'Save'}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Sidebar Collapse handle button */}
                             <button 
                                 className="sidebar-collapse-btn" 
                                 style={{ 
-                                    left: `${navCollapsed ? (layoutsCollapsed ? 0 : 340) - 1 : (layoutsCollapsed ? 239 : 579)}px`
+                                    left: `${(navCollapsed ? 70 : 240) + (layoutsCollapsed ? 70 : 340) - 1}px`
                                 }}
                                 onClick={() => setLayoutsCollapsed(!layoutsCollapsed)}
                                 title={layoutsCollapsed ? "Expand Layouts Sidebar" : "Collapse Layouts Sidebar"}

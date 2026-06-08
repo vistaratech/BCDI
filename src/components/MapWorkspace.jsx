@@ -97,8 +97,9 @@ export default function MapWorkspace({
             rendererRef.current.setSelectedPlot(selectedPlotId);
             
             if (isAdmin) {
-                // For admin, auto-pan to selected plot centroid for editing
-                if (selectedPlotId && !editMode && isLocked) {
+                // For admin, auto-pan to selected plot centroid for editing if unlocked,
+                // but if it is locked, keep it centered and static like customer portal!
+                if (selectedPlotId && !editMode && !isLocked) {
                     const plot = mapData.plots.find(p => p.id === selectedPlotId);
                     if (plot) {
                         const centroid = rendererRef.current.calculateCentroid(plot.points);
@@ -111,10 +112,15 @@ export default function MapWorkspace({
                         rendererRef.current.updateTransform();
                         rendererRef.current.render();
                     }
-                } else if (!selectedPlotId) {
-                    if (rendererRef.current.editMode) {
-                        rendererRef.current.setEditMode(false);
-                        setEditMode(false);
+                } else {
+                    rendererRef.current.resetZoom();
+                    setCurrentZoom(rendererRef.current.zoom);
+                    
+                    if (!selectedPlotId) {
+                        if (rendererRef.current.editMode) {
+                            rendererRef.current.setEditMode(false);
+                            setEditMode(false);
+                        }
                     }
                 }
             } else {
@@ -522,29 +528,7 @@ export default function MapWorkspace({
                 </div>
             </div>
 
-            {/* Collapsible CAD Tools Toolbar */}
-            {!isAdmin ? null : (
-                <div className="floating-toolbar">
-                    <div className="toolbar-group">
-                        <button className={`btn-icon ${currentTool === 'select' ? 'active' : ''}`} onClick={handleToolSelect} title="Select Tool"><Pointer size={16}/></button>
-                        <button className={`btn-icon ${currentTool === 'pan' ? 'active' : ''}`} onClick={handleToolPan} title="Pan Navigation Tool"><Move size={16}/></button>
-                        <button className="btn-icon" onClick={handleZoomReset} title="Zoom Fit All"><Maximize size={16}/></button>
-                    </div>
-                    {isAdmin && (
-                        <div className="toolbar-group">
-                            <button className={`btn-icon ${editMode ? 'active' : ''}`} onClick={() => { if(selectedPlotId) setEditMode(!editMode) }} disabled={!selectedPlotId} title="Edit Plot Boundaries"><PencilRuler size={16}/></button>
-                            <button className="btn-icon" onClick={handleAddPlot} title="Add New custom Plot Boundary"><PlusCircle size={16}/></button>
-                            <button className="btn-icon" onClick={handleDeletePlot} disabled={!selectedPlotId} title="Delete Selected Plot"><Trash2 size={16}/></button>
-                        </div>
-                    )}
-                    <div className="toolbar-group">
-                        <button className={`btn-icon ${layers.labels ? 'active' : ''}`} onClick={() => toggleLayer('labels')} title="Toggle Plot Name Labels"><Type size={16}/></button>
-                        <button className={`btn-icon ${layers.roads ? 'active' : ''}`} onClick={() => toggleLayer('roads')} title="Toggle Roads Layer"><Milestone size={16}/></button>
-                        <button className={`btn-icon ${layers.grids ? 'active' : ''}`} onClick={() => toggleLayer('grids')} title="Toggle Blueprint Grid"><Grid3X3 size={16}/></button>
-                        <button className={`btn-icon ${layers.statusColors ? 'active' : ''}`} onClick={() => toggleLayer('statusColors')} title="Toggle Status Accent Colors"><Palette size={16}/></button>
-                    </div>
-                </div>
-            )}
+
 
 
 

@@ -348,39 +348,23 @@ class MapRenderer {
             bgH = this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : svgH;
         }
         
-        if (this.isAdmin) {
-            const padding = 30;
-            const availableW = rect.width > 0 ? rect.width - padding * 2 : svgW;
-            const availableH = rect.height > 0 ? rect.height - padding * 2 : svgH;
-            
-            const scaleX = availableW / bgW;
-            const scaleY = availableH / bgH;
-            const fitScale = Math.min(scaleX, scaleY, 1.25);
-            
-            this.zoom = Math.max(0.15, Math.round(fitScale * 100) / 100);
-            
-            this.panX = (availableW - bgW * this.zoom) / 2 - bgX * this.zoom + padding;
-            this.panY = (availableH - bgH * this.zoom) / 2 - bgY * this.zoom + padding;
-        } else {
-            // For customer view, use a fixed 85% zoom to ensure the map is prominent and large.
-            // All centering math is done in the SVG coordinate space (1600x1000) to prevent 
-            // mixing CSS pixels with SVG units, which causes vertical offset shifting and cut-offs at the top.
-            this.zoom = 0.85;
-            
-            const widthCSS = rect.width > 0 ? rect.width : 1640;
-            
-            // Drawer offset is 360px. Convert to SVG coordinate units.
-            const drawerWidthCSS = 360;
-            const drawerOffsetSVG = widthCSS > 800 ? drawerWidthCSS * (svgW / widthCSS) : 0;
-            
-            // Visible width and height in SVG coordinate units
-            const visibleWSVG = svgW - drawerOffsetSVG;
-            const visibleHSVG = svgH;
-            
-            // Center the sheet in SVG coordinate units
-            this.panX = (visibleWSVG - bgW * this.zoom) / 2 - bgX * this.zoom;
-            this.panY = (visibleHSVG - bgH * this.zoom) / 2 - bgY * this.zoom;
-        }
+        // Use a fixed 0.85 zoom to make the layout sheet prominent and large, exactly like the UserPortal layout view.
+        this.zoom = 0.85;
+        
+        const widthCSS = rect.width > 0 ? rect.width : 1640;
+        
+        // Drawer offset is 360px when a plot is selected. Convert to SVG coordinate units.
+        const isDrawerOpen = !!this.selectedPlotId;
+        const drawerWidthCSS = 360;
+        const drawerOffsetSVG = (widthCSS > 800 && isDrawerOpen) ? drawerWidthCSS * (svgW / widthCSS) : 0;
+        
+        // Visible width and height in SVG coordinate units
+        const visibleWSVG = svgW - drawerOffsetSVG;
+        const visibleHSVG = svgH;
+        
+        // Center the sheet in SVG coordinate units
+        this.panX = (visibleWSVG - bgW * this.zoom) / 2 - bgX * this.zoom;
+        this.panY = (visibleHSVG - bgH * this.zoom) / 2 - bgY * this.zoom;
         
         this.updateTransform();
         if (this.onZoomChange) this.onZoomChange(this.zoom);
