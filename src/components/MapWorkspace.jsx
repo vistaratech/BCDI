@@ -21,7 +21,7 @@ export default function MapWorkspace({
 }) {
     const svgRef = useRef(null);
     const rendererRef = useRef(null);
-    const [currentZoom, setCurrentZoom] = useState(0.85);
+    const [currentZoom, setCurrentZoom] = useState(0.9);
 
     // Initialize map renderer once
     useEffect(() => {

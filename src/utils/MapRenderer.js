@@ -12,10 +12,10 @@ class MapRenderer {
         this.onPlotUpdated = onPlotUpdated;
         this.onZoomChange = onZoomChange;
 
-        // Viewport transformations state (will be recalculated by resetZoom on mount)
-        this.zoom = 1.0;
-        this.panX = 0;
-        this.panY = 0;
+        // Viewport transformations state
+        this.zoom = 0.9;
+        this.panX = 100;
+        this.panY = 60;
         this.isPanning = false;
         this.panStartX = 0;
         this.panStartY = 0;
@@ -333,47 +333,38 @@ class MapRenderer {
     resetZoom() {
         if (!this.svg) return;
         const rect = this.svg.getBoundingClientRect();
+        const svgW = 1600;
+        const svgH = 1000;
         
-        // Get the content bounds (background image or default canvas)
-        let bgW = 1600;
-        let bgH = 1000;
+        let bgW = svgW;
+        let bgH = svgH;
         let bgX = 0;
         let bgY = 0;
         
         if (this.data.backgroundImage) {
             bgX = this.data.backgroundImage.x !== undefined ? this.data.backgroundImage.x : 0;
             bgY = this.data.backgroundImage.y !== undefined ? this.data.backgroundImage.y : 0;
-            bgW = this.data.backgroundImage.width !== undefined ? this.data.backgroundImage.width : 1600;
-            bgH = this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : 1000;
+            bgW = this.data.backgroundImage.width !== undefined ? this.data.backgroundImage.width : svgW;
+            bgH = this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : svgH;
         }
         
-        // Get actual container pixel dimensions
-        const containerW = rect.width > 0 ? rect.width : 1640;
-        const containerH = rect.height > 0 ? rect.height : 900;
+        // Use a fixed 0.9 zoom to make the layout sheet prominent and large, exactly like the UserPortal layout view.
+        this.zoom = 0.9;
         
-        // On desktop, account for the drawer panel offset
+        const widthCSS = rect.width > 0 ? rect.width : 1640;
+        
+        // Drawer offset is 360px when a plot is selected. Convert to SVG coordinate units.
         const isDrawerOpen = !!this.selectedPlotId;
         const drawerWidthCSS = 360;
-        const drawerOffset = (containerW > 800 && isDrawerOpen) ? drawerWidthCSS : 0;
+        const drawerOffsetSVG = (widthCSS > 800 && isDrawerOpen) ? drawerWidthCSS * (svgW / widthCSS) : 0;
         
-        // Available space for the map (with small padding)
-        const padding = containerW <= 768 ? 16 : 40;
-        const availW = containerW - drawerOffset - padding * 2;
-        const availH = containerH - padding * 2;
+        // Visible width and height in SVG coordinate units
+        const visibleWSVG = svgW - drawerOffsetSVG;
+        const visibleHSVG = svgH;
         
-        // Calculate zoom to fit the layout content into available space
-        const zoomW = availW / bgW;
-        const zoomH = availH / bgH;
-        this.zoom = Math.min(zoomW, zoomH);
-        
-        // Clamp zoom to reasonable limits
-        this.zoom = Math.max(0.15, Math.min(this.zoom, 2.0));
-        
-        // Center the content in the available space
-        const scaledW = bgW * this.zoom;
-        const scaledH = bgH * this.zoom;
-        this.panX = (containerW - drawerOffset - scaledW) / 2 - bgX * this.zoom;
-        this.panY = (containerH - scaledH) / 2 - bgY * this.zoom;
+        // Center the sheet in SVG coordinate units
+        this.panX = (visibleWSVG - bgW * this.zoom) / 2 - bgX * this.zoom;
+        this.panY = (visibleHSVG - bgH * this.zoom) / 2 - bgY * this.zoom;
         
         this.updateTransform();
         if (this.onZoomChange) this.onZoomChange(this.zoom);
