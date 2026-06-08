@@ -1876,5 +1876,116 @@ header {
     stroke: rgba(239, 68, 68, 1.0) !important;
 }
 
+.btn-zoom-adjust-icon {
+    transition: all var(--transition-fast) !important;
+}
+
+.btn-zoom-adjust-icon:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Bottom Floating Zoom Controls */
+.bottom-zoom-controls {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 40;
+    pointer-events: auto;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-workspace.has-selected-plot .bottom-zoom-controls {
+    right: 384px !important;
+}
+
+.bottom-zoom-controls .btn-canvas-action {
+    background: var(--bg-panel) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 20px !important;
+    padding: 6px 14px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.bottom-zoom-controls .btn-canvas-action:hover {
+    background: var(--border-color) !important;
+    border-color: var(--border-hover) !important;
+}
+
+.bottom-zoom-controls .zoom-slider-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: var(--bg-panel) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 20px !important;
+    padding: 4px 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.bottom-zoom-controls .zoom-label {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+}
+
+.bottom-zoom-controls .btn-zoom-adjust-icon {
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+}
+
+.bottom-zoom-controls .zoom-slider-input {
+    width: 80px !important;
+    height: 4px !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.bottom-zoom-controls .zoom-percent-text {
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    min-width: 36px !important;
+    text-align: right !important;
+}
+
+@media (max-width: 768px) {
+    .bottom-zoom-controls {
+        bottom: 12px !important;
+        right: 12px !important;
+        gap: 6px !important;
+    }
+    .map-workspace.has-selected-plot .bottom-zoom-controls {
+        right: 12px !important;
+    }
+    .bottom-zoom-controls .btn-canvas-action span {
+        display: none !important;
+    }
+    .bottom-zoom-controls .btn-canvas-action {
+        padding: 6px !important;
+        border-radius: 50% !important;
+    }
+}
+
 
 

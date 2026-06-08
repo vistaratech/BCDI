@@ -330,6 +330,29 @@ class MapRenderer {
         this.render();
     }
 
+    setZoomCentered(newZoom) {
+        if (!this.svg) return;
+        const rect = this.svg.getBoundingClientRect();
+        
+        // Calculate center of the screen/canvas
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        // Convert current screen center to SVG coordinate space
+        const svgX = (centerX - this.panX) / this.zoom;
+        const svgY = (centerY - this.panY) / this.zoom;
+        
+        // Update zoom scale
+        this.zoom = newZoom;
+        
+        // Recalculate pan positions to keep the same SVG point centered
+        this.panX = centerX - svgX * newZoom;
+        this.panY = centerY - svgY * newZoom;
+        
+        this.updateTransform();
+        this.render();
+    }
+
     resetZoom() {
         if (!this.svg) return;
         const rect = this.svg.getBoundingClientRect();

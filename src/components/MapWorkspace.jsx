@@ -124,9 +124,7 @@ export default function MapWorkspace({
                     }
                 }
             } else {
-                // For customer view, re-center the map layout sheet based on drawer visibility
-                rendererRef.current.resetZoom();
-                setCurrentZoom(rendererRef.current.zoom);
+                // Keep the current zoom and position when plot selection changes in customer portal
             }
         }
     }, [selectedPlotId]);
@@ -166,9 +164,7 @@ export default function MapWorkspace({
     const handleZoomIn = () => {
         if (rendererRef.current) {
             const nextZoom = Math.min(5.0, rendererRef.current.zoom + 0.1);
-            rendererRef.current.zoom = nextZoom;
-            rendererRef.current.updateTransform();
-            rendererRef.current.render();
+            rendererRef.current.setZoomCentered(nextZoom);
             setCurrentZoom(nextZoom);
         }
     };
@@ -176,9 +172,7 @@ export default function MapWorkspace({
     const handleZoomOut = () => {
         if (rendererRef.current) {
             const nextZoom = Math.max(0.15, rendererRef.current.zoom - 0.1);
-            rendererRef.current.zoom = nextZoom;
-            rendererRef.current.updateTransform();
-            rendererRef.current.render();
+            rendererRef.current.setZoomCentered(nextZoom);
             setCurrentZoom(nextZoom);
         }
     };
@@ -495,22 +489,7 @@ export default function MapWorkspace({
                             </span>
                         </div>
                     )}
-                    <button className="btn-canvas-action" onClick={handleZoomReset}>
-                        <Maximize size={14} />
-                        <span>Fit to Screen</span>
-                    </button>
-                    
-                    <div className="zoom-control-group">
-                        <button className="btn-zoom-adjust" onClick={handleZoomOut} title="Zoom Out">
-                            <Minus size={14} />
-                        </button>
-                        <span className="zoom-percent-display">
-                            {Math.round(currentZoom * 100)}%
-                        </span>
-                        <button className="btn-zoom-adjust" onClick={handleZoomIn} title="Zoom In">
-                            <Plus size={14} />
-                        </button>
-                    </div>
+
 
                     {isAdmin && (
                         <button 
@@ -540,6 +519,51 @@ export default function MapWorkspace({
                 ref={svgRef}
                 style={{ flex: 1, width: '100%', height: '100%' }}
             ></svg>
+            
+            {/* Bottom Floating Zoom Controls */}
+            <div className="bottom-zoom-controls">
+                <button className="btn-canvas-action" onClick={handleZoomReset}>
+                    <Maximize size={14} />
+                    <span>Fit to Screen</span>
+                </button>
+                
+                <div className="zoom-slider-container">
+                    <span className="zoom-label">ZOOM:</span>
+                    <button 
+                        onClick={handleZoomOut} 
+                        title="Zoom Out"
+                        className="btn-zoom-adjust-icon"
+                    >
+                        <Minus size={13} />
+                    </button>
+                    <input 
+                        type="range" 
+                        min="0.15" 
+                        max="2.5" 
+                        step="0.05" 
+                        value={currentZoom} 
+                        onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (rendererRef.current) {
+                                rendererRef.current.setZoomCentered(val);
+                            }
+                            setCurrentZoom(val);
+                        }} 
+                        className="zoom-slider-input"
+                        title="Adjust zoom level"
+                    />
+                    <button 
+                        onClick={handleZoomIn} 
+                        title="Zoom In"
+                        className="btn-zoom-adjust-icon"
+                    >
+                        <Plus size={13} />
+                    </button>
+                    <span className="zoom-percent-text">
+                        {Math.round(currentZoom * 100)}%
+                    </span>
+                </div>
+            </div>
             
             <div id="canvas-tooltip" className="custom-tooltip"></div>
         </main>
