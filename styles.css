@@ -15,6 +15,7 @@
     --text-primary: #f3f4f6;
     --text-secondary: #9ca3af;
     --text-muted: #6b7280;
+    --bg-input: rgba(0, 0, 0, 0.25);
     
     /* Branding Colors */
     --primary: #6366f1;
@@ -40,8 +41,8 @@
     --color-premium-border: rgba(168, 85, 247, 0.4);
 
     /* UI Measurements */
-    --sidebar-width: 420px;
-    --editor-width: 380px;
+    --sidebar-width: 340px;
+    --editor-width: 360px;
     --header-height: 70px;
     --radius-sm: 8px;
     --radius-md: 14px;
@@ -72,6 +73,7 @@
     --text-primary: #e0f2fe;
     --text-secondary: #7dd3fc;
     --text-muted: #38bdf8;
+    --bg-input: rgba(0, 0, 0, 0.3);
     
     --primary: #00f2fe;
     --primary-glow: rgba(0, 242, 254, 0.35);
@@ -94,6 +96,7 @@
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #64748b;
+    --bg-input: #ffffff;
     
     --primary: #0f172a;
     --primary-glow: rgba(15, 23, 42, 0.15);
@@ -116,6 +119,7 @@
     --text-primary: #fdfbf7;
     --text-secondary: #d4c8b3;
     --text-muted: #998a72;
+    --bg-input: rgba(0, 0, 0, 0.3);
     
     --primary: #d4af37;
     --primary-glow: rgba(212, 175, 55, 0.25);
@@ -125,6 +129,75 @@
     --grid-major: rgba(212, 175, 55, 0.04);
     --grid-minor: rgba(212, 175, 55, 0.015);
     --road-color: rgba(212, 175, 55, 0.03);
+}
+
+/* BCDI Brand Theme (Visiting Card Color Scheme) */
+[data-theme="bcdi"] {
+    --bg-main: #0c0e08;
+    --bg-surface: rgba(26, 31, 18, 0.7);
+    --bg-surface-opaque: #1a1f12;
+    --bg-panel: rgba(20, 24, 14, 0.85);
+    --border-color: rgba(163, 201, 14, 0.15);
+    --border-hover: rgba(163, 201, 14, 0.3);
+    --text-primary: #f6f8f2;
+    --text-secondary: #c9d2c0;
+    --text-muted: #88927b;
+    --bg-input: rgba(0, 0, 0, 0.25);
+    
+    --primary: #a3c90e;
+    --primary-glow: rgba(163, 201, 14, 0.25);
+    --accent: #87a80b;
+    --accent-glow: rgba(135, 168, 11, 0.15);
+    
+    --grid-major: rgba(163, 201, 14, 0.04);
+    --grid-minor: rgba(163, 201, 14, 0.015);
+    --road-color: rgba(163, 201, 14, 0.03);
+}
+
+/* BCDI Brand Theme (Lime Green - Light Mode) */
+[data-theme="bcdi-light"] {
+    --bg-main: #f5f7f2;
+    --bg-surface: rgba(239, 243, 230, 0.75);
+    --bg-surface-opaque: #eff3e3;
+    --bg-panel: rgba(243, 247, 235, 0.88);
+    --border-color: rgba(130, 164, 7, 0.22);
+    --border-hover: rgba(130, 164, 7, 0.4);
+    --text-primary: #1f2710;
+    --text-secondary: #4a5a2f;
+    --text-muted: #728257;
+    --bg-input: #ffffff;
+    
+    --primary: #769904;
+    --primary-glow: rgba(118, 153, 4, 0.2);
+    --accent: #5e7a02;
+    --accent-glow: rgba(94, 122, 2, 0.12);
+    
+    --grid-major: rgba(118, 153, 4, 0.06);
+    --grid-minor: rgba(118, 153, 4, 0.02);
+    --road-color: rgba(118, 153, 4, 0.04);
+}
+
+/* Sleek Light Mode */
+[data-theme="light"] {
+    --bg-main: #f8fafc;
+    --bg-surface: rgba(241, 245, 249, 0.75);
+    --bg-surface-opaque: #f1f5f9;
+    --bg-panel: rgba(255, 255, 255, 0.88);
+    --border-color: rgba(0, 0, 0, 0.09);
+    --border-hover: rgba(0, 0, 0, 0.18);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --bg-input: #ffffff;
+    
+    --primary: #4f46e5;
+    --primary-glow: rgba(79, 70, 229, 0.2);
+    --accent: #7c3aed;
+    --accent-glow: rgba(124, 58, 237, 0.12);
+    
+    --grid-major: rgba(0, 0, 0, 0.04);
+    --grid-minor: rgba(0, 0, 0, 0.015);
+    --road-color: rgba(0, 0, 0, 0.03);
 }
 
 /* -------------------------------------------------------------
@@ -239,10 +312,19 @@ header {
     flex-direction: column;
     z-index: 80;
     overflow-y: auto;
-    transition: transform var(--transition-smooth);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                border 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 24px;
+    gap: 16px;
 }
 
 .editor-panel {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    height: calc(100% - 48px);
     width: var(--editor-width);
     background: var(--bg-panel);
     border-left: 1px solid var(--border-color);
@@ -252,16 +334,12 @@ header {
     z-index: 80;
     overflow-y: auto;
     transition: transform var(--transition-smooth), opacity var(--transition-smooth);
-    position: relative;
 }
 
 .editor-panel.collapsed {
     transform: translateX(100%);
     opacity: 0;
     pointer-events: none;
-    position: absolute;
-    right: 0;
-    height: 100%;
 }
 
 .panel-header {
@@ -374,13 +452,13 @@ header {
 }
 
 .form-group input, .form-group select, .form-group textarea {
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--bg-input);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     padding: 10px 12px;
     color: var(--text-primary);
     font-size: 0.95rem;
-    transition: border-color var(--transition-fast);
+    transition: all var(--transition-fast);
     width: 100%;
 }
 
@@ -391,7 +469,47 @@ header {
 
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
     outline: none;
+}
+
+/* Dynamic status select styling */
+.status-select {
+    font-weight: 600 !important;
+    transition: all var(--transition-fast) !important;
+}
+.status-select-available {
+    background-color: var(--color-available-glow) !important;
+    color: var(--color-available) !important;
+    border-color: var(--color-available-border) !important;
+}
+.status-select-reserved {
+    background-color: var(--color-reserved-glow) !important;
+    color: var(--color-reserved) !important;
+    border-color: var(--color-reserved-border) !important;
+}
+.status-select-sold {
+    background-color: var(--color-sold-glow) !important;
+    color: var(--color-sold) !important;
+    border-color: var(--color-sold-border) !important;
+}
+.status-select-premium {
+    background-color: var(--color-premium-glow) !important;
+    color: var(--color-premium) !important;
+    border-color: var(--color-premium-border) !important;
+}
+.status-select option {
+    background: var(--bg-surface-opaque) !important;
+    color: var(--text-primary) !important;
+}
+
+.form-group input:disabled, .form-group select:disabled, .form-group textarea:disabled,
+.form-group input[readonly] {
+    opacity: 0.6;
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-style: dashed;
+    cursor: not-allowed;
+    box-shadow: none !important;
 }
 
 .form-row {
@@ -509,10 +627,26 @@ header {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    cursor: default;
+}
+
+.map-workspace.tool-select {
+    cursor: default;
+}
+
+.map-workspace.tool-pan {
     cursor: grab;
 }
 
-.map-workspace:active {
+.map-workspace.tool-pan:active {
+    cursor: grabbing;
+}
+
+.map-workspace.tool-pan .plot-polygon {
+    cursor: grab;
+}
+
+.map-workspace.tool-pan .plot-polygon:active {
     cursor: grabbing;
 }
 
@@ -549,7 +683,9 @@ header {
 
 /* Plot SVG Polygons */
 .plot-polygon {
-    stroke-width: 2px;
+    fill: transparent;
+    stroke: rgba(99, 102, 241, 0.2);
+    stroke-width: 2.2px;
     transition: stroke var(--transition-fast), fill var(--transition-fast), stroke-width var(--transition-fast);
     cursor: pointer;
 }
@@ -557,46 +693,75 @@ header {
 /* Color states on map */
 .plot-polygon.state-available {
     fill: rgba(16, 185, 129, 0.08);
-    stroke: rgba(16, 185, 129, 0.45);
+    stroke: rgba(16, 185, 129, 0.65);
 }
 .plot-polygon.state-available:hover {
-    fill: rgba(16, 185, 129, 0.16);
-    stroke: rgba(16, 185, 129, 0.8);
+    fill: rgba(16, 185, 129, 0.22);
+    stroke: rgba(16, 185, 129, 0.85);
 }
 
 .plot-polygon.state-reserved {
     fill: rgba(245, 158, 11, 0.08);
-    stroke: rgba(245, 158, 11, 0.45);
+    stroke: rgba(245, 158, 11, 0.65);
 }
 .plot-polygon.state-reserved:hover {
-    fill: rgba(245, 158, 11, 0.16);
-    stroke: rgba(245, 158, 11, 0.8);
+    fill: rgba(245, 158, 11, 0.22);
+    stroke: rgba(245, 158, 11, 0.85);
 }
 
 .plot-polygon.state-sold {
-    fill: rgba(239, 68, 68, 0.08);
-    stroke: rgba(239, 68, 68, 0.4);
+    fill: rgba(239, 68, 68, 0.22);
+    stroke: rgba(239, 68, 68, 0.8);
 }
 .plot-polygon.state-sold:hover {
-    fill: rgba(239, 68, 68, 0.14);
-    stroke: rgba(239, 68, 68, 0.7);
+    fill: rgba(239, 68, 68, 0.38);
+    stroke: rgba(239, 68, 68, 0.95);
 }
 
 .plot-polygon.state-premium {
     fill: rgba(168, 85, 247, 0.08);
-    stroke: rgba(168, 85, 247, 0.45);
+    stroke: rgba(168, 85, 247, 0.65);
 }
 .plot-polygon.state-premium:hover {
-    fill: rgba(168, 85, 247, 0.16);
-    stroke: rgba(168, 85, 247, 0.8);
+    fill: rgba(168, 85, 247, 0.22);
+    stroke: rgba(168, 85, 247, 0.85);
 }
 
-/* Active Selected Plot highlight */
+/* Active Selected Plot highlight with pulse animation */
+@keyframes select-pulse {
+    0% {
+        stroke-width: 3.5px;
+        filter: drop-shadow(0 0 6px var(--primary-glow));
+    }
+    50% {
+        stroke-width: 5.5px;
+        filter: drop-shadow(0 0 14px var(--primary));
+    }
+    100% {
+        stroke-width: 3.5px;
+        filter: drop-shadow(0 0 6px var(--primary-glow));
+    }
+}
+
 .plot-polygon.selected {
-    fill: rgba(99, 102, 241, 0.18) !important;
+    fill: var(--primary-glow) !important;
     stroke: var(--primary) !important;
     stroke-width: 3.5px !important;
-    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
+    filter: drop-shadow(0 0 8px var(--primary-glow));
+    animation: select-pulse 2s infinite ease-in-out;
+}
+
+.plot-polygon.selected.state-sold {
+    fill: rgba(239, 68, 68, 0.35) !important;
+}
+.plot-polygon.selected.state-available {
+    fill: rgba(16, 185, 129, 0.18) !important;
+}
+.plot-polygon.selected.state-reserved {
+    fill: rgba(245, 158, 11, 0.18) !important;
+}
+.plot-polygon.selected.state-premium {
+    fill: rgba(168, 85, 247, 0.18) !important;
 }
 
 /* Plot Text Labels */
@@ -652,16 +817,16 @@ header {
  * ------------------------------------------------------------- */
 .floating-toolbar {
     position: absolute;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 72px;
+    left: 20px;
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
-    border-radius: 40px;
-    padding: 8px 16px;
+    border-radius: 24px;
+    padding: 12px 8px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(12px);
     z-index: 70;
@@ -669,17 +834,18 @@ header {
 
 .toolbar-group {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    border-right: 1px solid var(--border-color);
-    padding-right: 8px;
-    margin-right: 4px;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
 }
 
 .toolbar-group:last-child {
-    border-right: none;
-    padding-right: 0;
-    margin-right: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
 }
 
 .btn-icon {
@@ -711,7 +877,7 @@ header {
 /* Tooltip standard hovering visual */
 .custom-tooltip {
     position: fixed;
-    background: rgba(15, 18, 25, 0.95);
+    background: var(--bg-surface-opaque);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 12px 16px;
@@ -719,7 +885,7 @@ header {
     font-size: 0.85rem;
     pointer-events: none;
     z-index: 1000;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
@@ -1015,3 +1181,709 @@ header {
         min-height: 500px;
     }
 }
+
+/* CAD Laser contour drawing animation for 2D shape preview */
+@keyframes draw-contour {
+    from {
+        stroke-dashoffset: 800;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.animated-contour {
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    animation: draw-contour 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Far-Left Navigation Sidebar */
+.nav-sidebar {
+    width: 240px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    gap: 20px;
+    z-index: 90;
+    backdrop-filter: blur(12px);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                border 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-sidebar.collapsed {
+    width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.nav-brand-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px var(--primary-glow);
+    color: white;
+}
+
+.nav-brand-text h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.nav-brand-text p {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: transparent;
+    border: none;
+    text-align: left;
+    width: 100%;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* Horizontal Steps Progress Banner */
+.steps-banner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 16px 24px;
+    background: rgba(15, 18, 25, 0.4);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.step-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color var(--transition-fast);
+}
+
+.step-card:hover {
+    border-color: var(--border-hover);
+}
+
+.step-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-glow);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-card.active .step-badge {
+    background: var(--primary);
+    color: white;
+}
+
+.step-info h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.step-info p {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Central Workspace Main Wrapper */
+.workspace-grid {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* All Plots Grid View (Center-Right Panel) */
+.plots-grid-panel {
+    width: 340px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    z-index: 75;
+    backdrop-filter: blur(12px);
+}
+
+.plots-grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 16px;
+    overflow-y: auto;
+    max-height: calc(100vh - 250px);
+}
+
+.plot-grid-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.plot-grid-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.plot-grid-card.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 10px var(--primary-glow);
+}
+
+/* Badges for selected plot properties */
+.property-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.badge-available { background: var(--color-available-glow); color: var(--color-available); }
+.badge-sold { background: var(--color-sold-glow); color: var(--color-sold); }
+.badge-reserved { background: var(--color-reserved-glow); color: var(--color-reserved); }
+.badge-premium { background: var(--color-premium-glow); color: var(--color-premium); }
+
+/* --- Redesigned UI Custom Elements --- */
+
+/* Project switch profile card at bottom of navigation sidebar */
+.nav-profile-card {
+    margin-top: auto;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.nav-profile-card:hover {
+    background: var(--bg-surface-opaque);
+    border-color: var(--border-hover);
+}
+
+.nav-profile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--primary-glow);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.nav-profile-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 1px;
+}
+
+.nav-profile-subtitle {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-profile-chevron {
+    color: var(--text-secondary);
+}
+
+/* Layouts Middle Sidebar Layout */
+.layouts-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2px;
+    justify-content: flex-start;
+}
+
+.layouts-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.2px;
+    margin: 0;
+}
+
+.layouts-add-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.layouts-add-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.08);
+}
+
+.layouts-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+}
+
+.layouts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 4px;
+}
+
+.layout-plot-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    border-left: 3px solid transparent;
+}
+
+.layout-plot-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.layout-plot-item.selected {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: var(--primary);
+    border-left-color: var(--primary);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+/* Canvas Header Bar Styling inside Map Workspace */
+.canvas-header-bar {
+    height: 48px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 50;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.canvas-file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.canvas-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-canvas-action {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-canvas-action:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-hover);
+}
+
+.zoom-control-group {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.btn-zoom-adjust {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all var(--transition-fast);
+}
+
+.btn-zoom-adjust:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.zoom-percent-display {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0 10px;
+    min-width: 50px;
+    text-align: center;
+}
+
+/* Paper Sheet Layout on Dark CAD Canvas */
+#ref-overlay-paper {
+    fill: #ffffff;
+    filter: drop-shadow(0px 8px 30px rgba(0,0,0,0.55));
+}
+
+/* Collapsible layouts sidebar styling */
+.sidebar.collapsed {
+    width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Toggle tab handle button */
+.sidebar-collapse-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 38px;
+    border-radius: 0 6px 6px 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 95;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.18);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.sidebar-collapse-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-50%) scale(1.05);
+}
+
+/* Feature Classification Styles */
+.plot-polygon.class-road {
+    fill: rgba(148, 163, 184, 0.06) !important;
+    stroke: rgba(148, 163, 184, 0.45) !important;
+    stroke-dasharray: 4 4 !important;
+}
+.plot-polygon.class-road:hover {
+    fill: rgba(148, 163, 184, 0.16) !important;
+    stroke: rgba(148, 163, 184, 0.75) !important;
+}
+
+.plot-polygon.class-park {
+    fill: rgba(34, 197, 94, 0.08) !important;
+    stroke: rgba(34, 197, 94, 0.45) !important;
+}
+.plot-polygon.class-park:hover {
+    fill: rgba(34, 197, 94, 0.18) !important;
+    stroke: rgba(34, 197, 94, 0.75) !important;
+}
+
+.plot-polygon.class-amenity {
+    fill: rgba(6, 182, 212, 0.08) !important;
+    stroke: rgba(6, 182, 212, 0.45) !important;
+}
+.plot-polygon.class-amenity:hover {
+    fill: rgba(6, 182, 212, 0.18) !important;
+    stroke: rgba(6, 182, 212, 0.75) !important;
+}
+
+/* Selected override handles */
+.plot-polygon.class-road.selected,
+.plot-polygon.class-park.selected,
+.plot-polygon.class-amenity.selected {
+    fill: rgba(99, 102, 241, 0.18) !important;
+    stroke: var(--primary) !important;
+    stroke-dasharray: none !important;
+}
+
+/* Classification Badges in List */
+.classification-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: auto;
+}
+.classification-badge.badge-road {
+    background: rgba(148, 163, 184, 0.1);
+    color: rgb(148, 163, 184);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.classification-badge.badge-park {
+    background: rgba(34, 197, 94, 0.1);
+    color: rgb(74, 222, 128);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+.classification-badge.badge-amenity {
+    background: rgba(6, 182, 212, 0.1);
+    color: rgb(34, 211, 238);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+/* Floating Navigation collapse button */
+.nav-collapse-btn {
+    position: absolute;
+    top: 86px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.nav-collapse-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Custom Modal Overlay & Modal box styling */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.custom-modal {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(99, 102, 241, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.custom-modal h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.custom-modal p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.custom-modal input {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border var(--transition-fast);
+}
+
+.custom-modal input:focus {
+    border-color: var(--primary);
+}
+
+.custom-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.custom-modal .modal-actions button {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.custom-modal .modal-actions .btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+}
+
+.custom-modal .modal-actions .btn-primary:hover {
+    opacity: 0.9;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.9) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Ensure sold status always turns the plot/road/park red on the map */
+.plot-polygon.state-sold {
+    fill: rgba(239, 68, 68, 0.3) !important;
+    stroke: rgba(239, 68, 68, 0.9) !important;
+    stroke-dasharray: none !important;
+}
+.plot-polygon.state-sold:hover {
+    fill: rgba(239, 68, 68, 0.45) !important;
+    stroke: rgba(239, 68, 68, 1.0) !important;
+}
+
+
+

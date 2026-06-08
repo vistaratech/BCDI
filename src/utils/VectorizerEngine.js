@@ -18,7 +18,7 @@ class VectorizerEngine {
             dilation: 2,         // Morphological line dilation/widening thickness (1-5px)
             simplify: 5.0,       // RDP tolerance factor (high = fewer vertices)
             minArea: 50,         // Ignore tiny speckle noise
-            maxArea: 1000000,    // Ignore total background bounds
+            maxArea: 8000,       // Ignore total background bounds/frames
             gridSize: 6,         // Sampling density (lower = higher quality, slower)
             ocrWords: []         // List of [{ text, x, y }] extracted by OCR
         };
@@ -26,91 +26,297 @@ class VectorizerEngine {
 
         // 1. Load image onto canvas
         const img = await this.loadImage(imageSrc);
-        
+        const origWidth = img.width;
+        const origHeight = img.height;
+
         // Scale canvas bounds to balance performance & accuracy (max width 1200)
-        const scale = Math.min(1200 / img.width, 1.0);
-        this.canvas.width = img.width * scale;
-        this.canvas.height = img.height * scale;
-        this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+        const scale = Math.min(1200 / origWidth, 1.0);
+        const canvasW = Math.round(origWidth * scale);
+        const canvasH = Math.round(origHeight * scale);
+        this.canvas.width = canvasW;
+        this.canvas.height = canvasH;
+        this.ctx.drawImage(img, 0, 0, canvasW, canvasH);
+
+        // Helper to determine average luminance inside an OCR bounding box
+        const getBBoxLuminance = (w) => {
+            if (!w.bbox) return 255;
+            const x0 = Math.max(0, Math.round(w.bbox.x0 * scale));
+            const y0 = Math.max(0, Math.round(w.bbox.y0 * scale));
+            const wBox = Math.max(1, Math.round((w.bbox.x1 - w.bbox.x0) * scale));
+            const hBox = Math.max(1, Math.round((w.bbox.y1 - w.bbox.y0) * scale));
+            
+            try {
+                const imgData = this.ctx.getImageData(x0, y0, wBox, hBox);
+                const data = imgData.data;
+                let sum = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    sum += 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                }
+                return sum / (wBox * hBox);
+            } catch (e) {
+                return 255;
+            }
+        };
+
+        // Draw solid background-colored rectangles over all OCR-detected text bounding boxes
+        // to prevent text from creating gaps/holes in plots or floating plots in roadways
+        if (config.ocrWords && config.ocrWords.length > 0) {
+            config.ocrWords.forEach(w => {
+                if (w.bbox) {
+                    const lum = getBBoxLuminance(w);
+                    // If the box is dark (e.g. road band), fill it with black.
+                    // If the box is light (e.g. plot area), fill it with white.
+                    this.ctx.fillStyle = lum < 120 ? "#000000" : "#ffffff";
+                    
+                    const pad = 4; // slight padding to ensure we completely cover the text edges
+                    const x0 = Math.max(0, Math.round(w.bbox.x0 * scale) - pad);
+                    const y0 = Math.max(0, Math.round(w.bbox.y0 * scale) - pad);
+                    const wBox = Math.round((w.bbox.x1 - w.bbox.x0) * scale) + 2 * pad;
+                    const hBox = Math.round((w.bbox.y1 - w.bbox.y0) * scale) + 2 * pad;
+                    this.ctx.fillRect(x0, y0, wBox, hBox);
+                }
+            });
+        }
 
         // 2. Perform Grayscale & Binarization
-        const imgData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const imgData = this.ctx.getImageData(0, 0, canvasW, canvasH);
         const binaryGrid = this.binarize(imgData, config.threshold, config.dilation);
 
-        // 3. Detect Bounded Regions (White parcel spaces inside black border lines)
-        const regions = this.detectRegions(binaryGrid, config);
+        // 3. Dynamic minimum area filter based on SVG coordinate space
+        //    Filters out tiny noise regions (text chars, line gaps) while keeping real plots
+        const svgArea = config.bgWidth * config.bgHeight;
+        const dynamicMinArea = Math.max(config.minArea, svgArea * 0.00008);
 
-        // 4. Trace Boundaries & Simplify using RDP
+        // 4. Pre-filter OCR words to only plot-number-like text
+        //    and transform coordinates from ORIGINAL image pixel space → SVG space
+        //    CRITICAL FIX: OCR returns coords in original image resolution,
+        //    NOT in scaled canvas resolution. We must divide by origWidth/origHeight.
+        const hasOcr = config.ocrWords && config.ocrWords.length > 0;
+        const plotOcrWords = [];
+        if (hasOcr) {
+            config.ocrWords.forEach(w => {
+                const text = w.text.trim();
+                const match = text.match(/^(?:plot|lot|p|l)?[-.]?(\d{1,4}[A-Za-z]?)$/i);
+                if (match) {
+                    plotOcrWords.push({
+                        text: `PLOT ${match[1]}`,
+                        svgX: config.bgX + (w.x / origWidth) * config.bgWidth,
+                        svgY: config.bgY + (w.y / origHeight) * config.bgHeight
+                    });
+                }
+            });
+        }
+
+        console.log(`[Vectorizer] OCR filter: ${config.ocrWords?.length || 0} total words → ${plotOcrWords.length} plot-number candidates`);
+
+        // 5. Detect Bounded Regions (White parcel spaces inside black border lines)
+        const regions = this.detectRegions(binaryGrid, config);
+        // Sort regions by pixel count descending so larger plots are matched to OCR first
+        regions.sort((a, b) => b.length - a.length);
+        console.log(`[Vectorizer] Region detection: ${regions.length} bounded regions found`);
+
+        // 6. Trace Boundaries, Simplify, & Match with OCR
         const plots = [];
+        const matchedOcrIndices = new Set();
+
         regions.forEach((region, index) => {
             // Trace boundary pixels using Moore-Neighbor
             const boundary = this.traceContour(region, binaryGrid.width, binaryGrid.height);
             if (boundary.length < 4) return;
 
-            // Scale coordinates back to align exactly with background image in SVG viewBox!
+            // Scale coordinates from canvas space → SVG space
             const scaledBoundary = boundary.map(pt => {
-                const u = pt[0] / (img.width * scale);
-                const v = pt[1] / (img.height * scale);
-                
-                const svgX = config.bgX + u * config.bgWidth;
-                const svgY = config.bgY + v * config.bgHeight;
-                
-                return [Math.round(svgX), Math.round(svgY)];
+                const u = pt[0] / canvasW;
+                const v = pt[1] / canvasH;
+                return [
+                    Math.round(config.bgX + u * config.bgWidth),
+                    Math.round(config.bgY + v * config.bgHeight)
+                ];
             });
 
             // Simplify polygons using Ramer-Douglas-Peucker (RDP)
             const simplifiedPoints = this.simplifyRDP(scaledBoundary, config.simplify);
             if (simplifiedPoints.length < 3) return;
 
-            // Calculate metrics (area & centroid)
+            // Calculate metrics and filter by area
             const area = this.calculateArea(simplifiedPoints);
-            if (area < config.minArea || area > config.maxArea) return;
+            if (area < dynamicMinArea || area > config.maxArea) return;
+
             const centroid = this.calculateCentroid(simplifiedPoints);
 
-            // 5. Match OCR Text strings located inside this polygon
-            let matchedText = `PLOT-${index + 1}`;
-            let matchedOwner = null;
-            
-            if (config.ocrWords && config.ocrWords.length > 0) {
-                // Find OCR words inside this polygon shape
-                const wordsInside = config.ocrWords.filter(word => {
-                    // Translate word pixel coords to the exact same SVG coordinates scale
-                    const u = word.x / (img.width * scale);
-                    const v = word.y / (img.height * scale);
-                    
-                    const wx = config.bgX + u * config.bgWidth;
-                    const wy = config.bgY + v * config.bgHeight;
-                    
-                    return this.isPointInPolygon([wx, wy], simplifiedPoints);
-                });
+            // 7. Match OCR Text: find plot number words inside this polygon
+            let matchedText = null;
+            let matchedIdx = -1;
+            let bestDist = Infinity;
 
-                if (wordsInside.length > 0) {
-                    // Sort words left-to-right, top-to-bottom to assemble contiguous text lines
-                    wordsInside.sort((a, b) => a.y - b.y || a.x - b.x);
-                    
-                    // Filter and join valid strings (like numbers and slashes e.g. "234/P")
-                    const validText = wordsInside.map(w => w.text).join(" ").trim();
-                    if (validText && validText.length >= 2) {
-                        matchedText = validText;
+            // Primary strategy: Point-in-Polygon test with correctly mapped SVG coords
+            for (let i = 0; i < plotOcrWords.length; i++) {
+                if (matchedOcrIndices.has(i)) continue; // Skip already-claimed words
+                const ocr = plotOcrWords[i];
+                if (this.isPointInPolygon([ocr.svgX, ocr.svgY], simplifiedPoints)) {
+                    const dist = Math.hypot(ocr.svgX - centroid.x, ocr.svgY - centroid.y);
+                    if (dist < bestDist) {
+                        matchedText = ocr.text;
+                        matchedIdx = i;
+                        bestDist = dist;
                     }
                 }
             }
 
+            // Fallback strategy: Proximity match (nearest unused OCR word within 3% of map diagonal)
+            if (!matchedText) {
+                const maxDist = Math.hypot(config.bgWidth, config.bgHeight) * 0.03;
+                for (let i = 0; i < plotOcrWords.length; i++) {
+                    if (matchedOcrIndices.has(i)) continue; // Skip already-claimed words
+                    const ocr = plotOcrWords[i];
+                    const dist = Math.hypot(ocr.svgX - centroid.x, ocr.svgY - centroid.y);
+                    if (dist < maxDist && dist < bestDist) {
+                        matchedText = ocr.text;
+                        matchedIdx = i;
+                        bestDist = dist;
+                    }
+                }
+            }
+
+            if (matchedIdx >= 0) {
+                matchedOcrIndices.add(matchedIdx);
+            }
+
             plots.push({
-                id: matchedText,
+                id: matchedText || `PLOT-${index + 1}`,
                 status: "available",
                 area: area,
                 price: 300,
-                owner: matchedOwner,
-                notes: `Automatically traced CAD contour. Recalibrated coordinates.`,
+                owner: null,
+                notes: matchedText
+                    ? `OCR-matched plot boundary. Recalibrated coordinates.`
+                    : `Automatically traced CAD contour. Recalibrated coordinates.`,
                 points: simplifiedPoints,
-                labelOffset: { x: 0, y: 0 }
+                labelOffset: { x: 0, y: 0 },
+                _ocrMatched: !!matchedText,
+                centroid: centroid // Keep centroid temporarily for frame-enclosure checks
             });
         });
 
-        // Resolve any duplicates in Plot IDs by appending incremental values
+        console.log(`[Vectorizer] Traced ${plots.length} raw regions.`);
+
+        // 7.5. Filter out outer boundary frames and legend/title blocks
+        const filteredTracedPlots = [];
+        const discardedPolygons = [];
+
+        plots.forEach((pA, idxA) => {
+            // Check if pA encloses multiple other plots (indicates it is an outer frame)
+            let containsCount = 0;
+            for (let idxB = 0; idxB < plots.length; idxB++) {
+                if (idxA === idxB) continue;
+                const pB = plots[idxB];
+                if (this.isPointInPolygon([pB.centroid.x, pB.centroid.y], pA.points)) {
+                    containsCount++;
+                }
+            }
+
+            if (containsCount > 1) {
+                console.log(`[Vectorizer] Ignoring outer frame/envelope "${pA.id}" (contains ${containsCount} other plot centroids)`);
+                discardedPolygons.push(pA.points);
+                return;
+            }
+
+            // Check if pA contains any typical legend/title block keywords in OCR text
+            let isLegend = false;
+            const legendKeywords = [
+                'legend', 'scale', 'north', 'index', 'key plan', 'developer', 'title', 
+                'location', 'site plan', 'master plan', 'layout plan', 'sign', 
+                'signature', 'date', 'zone', 'notes', 'remarks'
+            ];
+            
+            if (config.ocrWords && config.ocrWords.length > 0) {
+                for (const word of config.ocrWords) {
+                    const text = word.text.toLowerCase().trim();
+                    if (legendKeywords.some(keyword => text.includes(keyword))) {
+                        const svgX = config.bgX + (word.x / origWidth) * config.bgWidth;
+                        const svgY = config.bgY + (word.y / origHeight) * config.bgHeight;
+                        if (this.isPointInPolygon([svgX, svgY], pA.points)) {
+                            isLegend = true;
+                            console.log(`[Vectorizer] Ignoring legend/title block "${pA.id}" containing word "${word.text}"`);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (isLegend) {
+                discardedPolygons.push(pA.points);
+                return;
+            }
+
+            filteredTracedPlots.push(pA);
+        });
+
+        console.log(`[Vectorizer] Filtered down to ${filteredTracedPlots.length} valid regions. OCR-matched: ${filteredTracedPlots.filter(p => p._ocrMatched).length}`);
+
+        // 8. Keep all surviving traced plots to ensure no real parcel boundaries are missing.
+        let finalPlots = filteredTracedPlots;
+
+        // 9. Create approximate regions for OCR words that didn't match any detected boundary
+        //    Ensure we do NOT approximate boundaries for numbers inside discarded frames/legends.
+        if (plotOcrWords.length > 0) {
+            // Calculate average plot size for approximation
+            const avgPlotSize = finalPlots.length > 0
+                ? Math.sqrt(
+                    finalPlots.reduce((sum, p) => sum + this.calculateArea(p.points), 0) / finalPlots.length
+                  ) / 0.234  // reverse the area calibration coefficient
+                : Math.sqrt(svgArea / Math.max(plotOcrWords.length, 1)) * 0.35;
+            const halfSize = Math.min(avgPlotSize * 0.45, 60);
+
+            for (let i = 0; i < plotOcrWords.length; i++) {
+                if (!matchedOcrIndices.has(i)) {
+                    const ocr = plotOcrWords[i];
+                    
+                    // Skip if the OCR word falls inside any discarded outer frame or legend box
+                    let insideDiscarded = false;
+                    for (const poly of discardedPolygons) {
+                        if (this.isPointInPolygon([ocr.svgX, ocr.svgY], poly)) {
+                            insideDiscarded = true;
+                            break;
+                        }
+                    }
+                    if (insideDiscarded) {
+                        console.log(`[Vectorizer] Skipping OCR approximation for "${ocr.text}" because it falls inside an ignored frame or legend box.`);
+                        continue;
+                    }
+
+                    // Only create if this plot number isn't already in results
+                    if (!finalPlots.some(p => p.id === ocr.text)) {
+                        finalPlots.push({
+                            id: ocr.text,
+                            status: "available",
+                            area: halfSize * halfSize * 4 * 0.055,
+                            price: 300,
+                            owner: null,
+                            notes: "Plot detected via OCR. Boundary approximated.",
+                            points: [
+                                [Math.round(ocr.svgX - halfSize), Math.round(ocr.svgY - halfSize)],
+                                [Math.round(ocr.svgX + halfSize), Math.round(ocr.svgY - halfSize)],
+                                [Math.round(ocr.svgX + halfSize), Math.round(ocr.svgY + halfSize)],
+                                [Math.round(ocr.svgX - halfSize), Math.round(ocr.svgY + halfSize)]
+                            ],
+                            labelOffset: { x: 0, y: 0 },
+                            _ocrMatched: true
+                        });
+                    }
+                }
+            }
+        }
+
+        // Clean up internal flags and temporary centroid property
+        finalPlots.forEach(p => {
+            delete p._ocrMatched;
+            delete p.centroid;
+        });
+
+        // 10. Resolve duplicate Plot IDs by appending incremental suffixes
         const usedIds = new Set();
-        plots.forEach(plot => {
+        finalPlots.forEach(plot => {
             let baseId = plot.id;
             let counter = 1;
             while (usedIds.has(plot.id)) {
@@ -120,7 +326,15 @@ class VectorizerEngine {
             usedIds.add(plot.id);
         });
 
-        return plots;
+        // Sort plots by numeric value for clean sidebar display
+        finalPlots.sort((a, b) => {
+            const numA = parseInt(a.id.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.id.replace(/\D/g, '')) || 0;
+            return numA - numB;
+        });
+
+        console.log(`[Vectorizer] Final output: ${finalPlots.length} plots`);
+        return finalPlots;
     }
 
     // Loads image file cleanly
@@ -148,7 +362,7 @@ class VectorizerEngine {
             const r = data[i];
             const g = data[i+1];
             const b = data[i+2];
-            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            const gray = Math.max(r, g, b);
             sumGray += gray;
         }
         const avgLuminance = sumGray / numPixels;
@@ -161,7 +375,7 @@ class VectorizerEngine {
             const r = data[i];
             const g = data[i+1];
             const b = data[i+2];
-            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            const gray = Math.max(r, g, b);
             
             const pixelIndex = i / 4;
             

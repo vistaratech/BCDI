@@ -5,11 +5,12 @@
  * ------------------------------------------------------------- */
 
 class MapRenderer {
-    constructor(svgElement, mapData, onPlotSelected, onPlotUpdated) {
+    constructor(svgElement, mapData, onPlotSelected, onPlotUpdated, onZoomChange) {
         this.svg = svgElement;
         this.data = mapData;
         this.onPlotSelected = onPlotSelected;
         this.onPlotUpdated = onPlotUpdated;
+        this.onZoomChange = onZoomChange;
 
         // Viewport transformations state
         this.zoom = 0.85;
@@ -23,6 +24,7 @@ class MapRenderer {
         this.selectedPlotId = null;
         this.editMode = false; // Vertex editing mode
         this.activeHandle = null; // Vertex circle index being dragged
+        this.tool = 'select'; // Active tool (select or pan)
         
         // Layer toggle parameters
         this.layers = {
@@ -107,7 +109,7 @@ class MapRenderer {
         hatchLine.setAttribute("y1", "0");
         hatchLine.setAttribute("x2", "0");
         hatchLine.setAttribute("y2", "15");
-        hatchLine.setAttribute("stroke", "rgba(255, 255, 255, 0.2)");
+        hatchLine.setAttribute("stroke", "var(--border-color)");
         hatchLine.setAttribute("stroke-width", "2.5");
         hatchPattern.appendChild(hatchLine);
         defs.appendChild(hatchPattern);
@@ -171,11 +173,11 @@ class MapRenderer {
         this.svg.addEventListener("mousedown", (e) => {
             // If dragging handle or active selected input, ignore panning
             if (e.target.classList.contains("vertex-handle")) return;
+            if (this.tool !== 'pan') return;
             
             this.isPanning = true;
             this.panStartX = e.clientX - this.panX;
             this.panStartY = e.clientY - this.panY;
-            this.svg.style.cursor = "grabbing";
         });
 
         window.addEventListener("mousemove", (e) => {
@@ -192,7 +194,6 @@ class MapRenderer {
         window.addEventListener("mouseup", () => {
             if (this.isPanning) {
                 this.isPanning = false;
-                this.svg.style.cursor = "grab";
             }
             if (this.activeHandle !== null) {
                 this.activeHandle = null;
@@ -228,6 +229,7 @@ class MapRenderer {
             this.zoom = nextZoom;
 
             this.updateTransform();
+            if (this.onZoomChange) this.onZoomChange(this.zoom);
         }, { passive: false });
 
         // Tooltip tracking mouseover
@@ -242,16 +244,31 @@ class MapRenderer {
                     this.tooltip.style.left = `${e.clientX + 16}px`;
                     this.tooltip.style.top = `${e.clientY + 16}px`;
                     
-                    const priceFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(plot.price);
-                    const totalVal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(plot.area * plot.price);
+                    const classification = plot.classification || 'plot';
+                    const areaText = `${plot.area.toFixed(2)} SQ.MT.`;
                     
-                    this.tooltip.innerHTML = `
-                        <div class="tooltip-title">${plot.id}</div>
-                        <div>Area: <strong>${plot.area.toFixed(2)} SQ.MT.</strong></div>
-                        <div>Value: <strong>${totalVal}</strong> ($${plot.price}/m²)</div>
-                        <div>Status: <span class="status-indicator status-${plot.status}">${plot.status}</span></div>
-                        ${plot.owner ? `<div>Owner: <em>${plot.owner}</em></div>` : ''}
-                    `;
+                    if (classification === 'plot') {
+                        const priceFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(plot.price);
+                        const totalVal = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(plot.area * plot.price);
+                        this.tooltip.innerHTML = `
+                            <div class="tooltip-title">${plot.id}</div>
+                            <div>Classification: <strong style="text-transform: capitalize;">${classification}</strong></div>
+                            <div>Area: <strong>${areaText}</strong></div>
+                            <div>Value: <strong>${totalVal}</strong> (₹${plot.price}/m²)</div>
+                            <div>Status: <span class="status-indicator status-${plot.status}">${plot.status}</span></div>
+                            ${plot.owner ? `<div>Owner: <em>${plot.owner}</em></div>` : ''}
+                        `;
+                    } else {
+                        let classLabel = 'Roadway';
+                        if (classification === 'park') classLabel = 'Park / Greenery';
+                        if (classification === 'amenity') classLabel = 'Amenity / Utility';
+                        this.tooltip.innerHTML = `
+                            <div class="tooltip-title">${plot.id}</div>
+                            <div>Type: <strong>${classLabel}</strong></div>
+                            <div>Area: <strong>${areaText}</strong></div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; border-top: 1px dashed var(--border-color); padding-top: 4px;">Public Infrastructure</div>
+                        `;
+                    }
                 }
             } else {
                 if (this.tooltip) this.tooltip.classList.remove("visible");
@@ -287,6 +304,15 @@ class MapRenderer {
         this.render();
     }
 
+    setTool(tool) {
+        this.tool = tool;
+    }
+
+    setLayers(layers) {
+        this.layers = { ...this.layers, ...layers };
+        this.render();
+    }
+
     toggleLayer(layerName, visible) {
         if (layerName in this.layers) {
             this.layers[layerName] = visible;
@@ -309,6 +335,7 @@ class MapRenderer {
         this.panX = 100;
         this.panY = 60;
         this.updateTransform();
+        if (this.onZoomChange) this.onZoomChange(this.zoom);
     }
 
     // Mathematical formula to calculate the center coordinate (centroid) of a non-self-intersecting polygon
@@ -385,20 +412,41 @@ class MapRenderer {
 
         // Render Reference Sketch Overlay Image (Bottom-most Layer)
         if (this.data.backgroundImage && this.data.backgroundImage.href) {
+            const bgX = this.data.backgroundImage.x !== undefined ? this.data.backgroundImage.x : 0;
+            const bgY = this.data.backgroundImage.y !== undefined ? this.data.backgroundImage.y : 0;
+            const bgW = this.data.backgroundImage.width !== undefined ? this.data.backgroundImage.width : 1600;
+            const bgH = this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : 1000;
+
+            // Render paper sheet background rectangle under layout plan
+            const paper = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            paper.setAttribute("x", bgX);
+            paper.setAttribute("y", bgY);
+            paper.setAttribute("width", bgW);
+            paper.setAttribute("height", bgH);
+            paper.setAttribute("id", "ref-overlay-paper");
+            paper.setAttribute("pointer-events", "none");
+
+            const existingPaper = this.viewport.querySelector("#ref-overlay-paper");
+            if (existingPaper) existingPaper.remove();
+            this.viewport.insertBefore(paper, this.viewport.firstChild);
+
             const img = document.createElementNS("http://www.w3.org/2000/svg", "image");
             img.setAttribute("href", this.data.backgroundImage.href);
-            img.setAttribute("x", this.data.backgroundImage.x !== undefined ? this.data.backgroundImage.x : 100);
-            img.setAttribute("y", this.data.backgroundImage.y !== undefined ? this.data.backgroundImage.y : 100);
-            img.setAttribute("width", this.data.backgroundImage.width !== undefined ? this.data.backgroundImage.width : 1200);
-            img.setAttribute("height", this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : 800);
-            img.setAttribute("opacity", this.data.backgroundImage.opacity !== undefined ? this.data.backgroundImage.opacity : 0.5);
+            img.setAttribute("x", bgX);
+            img.setAttribute("y", bgY);
+            img.setAttribute("width", bgW);
+            img.setAttribute("height", bgH);
+            img.setAttribute("opacity", this.data.backgroundImage.opacity !== undefined ? this.data.backgroundImage.opacity : 1.0);
+            img.setAttribute("preserveAspectRatio", "none");
             img.setAttribute("pointer-events", "none");
             img.setAttribute("id", "ref-overlay-img");
             
             const existingImg = this.viewport.querySelector("#ref-overlay-img");
             if (existingImg) existingImg.remove();
-            this.viewport.insertBefore(img, this.viewport.firstChild);
+            this.viewport.insertBefore(img, paper.nextSibling);
         } else {
+            const existingPaper = this.viewport.querySelector("#ref-overlay-paper");
+            if (existingPaper) existingPaper.remove();
             const existingImg = this.viewport.querySelector("#ref-overlay-img");
             if (existingImg) existingImg.remove();
         }
@@ -442,10 +490,15 @@ class MapRenderer {
             
             // Generate visual classes based on selected parameters
             let classes = "plot-polygon";
-            if (this.layers.statusColors) {
-                classes += ` state-${plot.status}`;
-            } else {
-                classes += " state-available"; // Neutral style
+            const classification = plot.classification || 'plot';
+            classes += ` class-${classification}`;
+
+            if (classification === 'plot' || plot.status === 'sold') {
+                if (this.layers.statusColors) {
+                    classes += ` state-${plot.status}`;
+                } else if (classification === 'plot') {
+                    classes += " state-available"; // Neutral style
+                }
             }
             
             if (plot.id === this.selectedPlotId) {
@@ -457,7 +510,9 @@ class MapRenderer {
             // Add click listener
             poly.addEventListener("click", (e) => {
                 e.stopPropagation();
-                if (this.onPlotSelected) this.onPlotSelected(plot.id);
+                if (this.tool === 'select' && this.onPlotSelected) {
+                    this.onPlotSelected(plot.id);
+                }
             });
 
             this.plotsLayer.appendChild(poly);
@@ -486,18 +541,16 @@ class MapRenderer {
                 // Plot ID
                 const textId = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 textId.setAttribute("class", "plot-label");
-                textId.setAttribute("y", plot.isBuilding || plot.id.length > 8 ? "-5" : "0");
+                textId.setAttribute("y", "-4");
                 textId.textContent = plot.id;
                 textGroup.appendChild(textId);
                 
-                // Sub-Area (only on prominent plots or high zoom)
-                if (plot.isBuilding || plot.id === "COMMON PLOT" || plot.id.includes("+")) {
-                    const textArea = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    textArea.setAttribute("class", "plot-label-sub");
-                    textArea.setAttribute("y", "10");
-                    textArea.textContent = `${plot.area.toFixed(2)} SQ.MT.`;
-                    textGroup.appendChild(textArea);
-                }
+                // Sub-Area (rendered for all plots, hidden on low zoom via CSS)
+                const textArea = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                textArea.setAttribute("class", "plot-label-sub");
+                textArea.setAttribute("y", "8");
+                textArea.textContent = `${Math.round(plot.area)} m²`;
+                textGroup.appendChild(textArea);
                 
                 this.labelsLayer.appendChild(textGroup);
             }
