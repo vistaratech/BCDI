@@ -1682,13 +1682,8 @@ export default function UserPortal({
                                         }}
                                         style={{ width: '100%', background: 'var(--bg-input)' }}
                                     >
-                                        <option value="bcdi">BCDI Brand (Lime Green - Dark)</option>
-                                        <option value="bcdi-light">BCDI Brand (Lime Green - Light)</option>
-                                        <option value="dark">Sleek Dark Mode</option>
-                                        <option value="light">Sleek Light Mode</option>
-                                        <option value="blueprint">Blueprint Grid</option>
-                                        <option value="cad">Technical CAD (Light)</option>
-                                        <option value="luxury">Luxury Gold</option>
+                                        <option value="bcdi-light">Light Mode</option>
+                                        <option value="bcdi">Dark Mode</option>
                                     </select>
                                 </div>
                             </div>

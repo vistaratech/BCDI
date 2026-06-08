@@ -9,7 +9,16 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Prevent Theme Flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem("bcdi_active_theme");
+            const theme = (savedTheme === "bcdi" || savedTheme === "bcdi-light") ? savedTheme : "bcdi-light";
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
 </head>
+<body>
     <div id="root"></div>
     <!-- Scripts Injection -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>

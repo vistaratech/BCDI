@@ -5,23 +5,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-    /* Theme Variables - Default to Sleek Dark */
-    --bg-main: #0a0c10;
-    --bg-surface: rgba(20, 24, 33, 0.7);
-    --bg-surface-opaque: #141821;
-    --bg-panel: rgba(15, 18, 25, 0.85);
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.16);
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    --bg-input: rgba(0, 0, 0, 0.25);
+    /* Default to BCDI Brand (Lime Green - Light Mode) */
+    --bg-main: #f5f7f2;
+    --bg-surface: rgba(239, 243, 230, 0.75);
+    --bg-surface-opaque: #eff3e3;
+    --bg-panel: rgba(243, 247, 235, 0.88);
+    --border-color: rgba(130, 164, 7, 0.22);
+    --border-hover: rgba(130, 164, 7, 0.4);
+    --text-primary: #1f2710;
+    --text-secondary: #4a5a2f;
+    --text-muted: #728257;
+    --bg-input: #ffffff;
     
     /* Branding Colors */
-    --primary: #6366f1;
-    --primary-glow: rgba(99, 102, 241, 0.3);
-    --accent: #8b5cf6;
-    --accent-glow: rgba(139, 92, 246, 0.2);
+    --primary: #769904;
+    --primary-glow: rgba(118, 153, 4, 0.2);
+    --accent: #5e7a02;
+    --accent-glow: rgba(94, 122, 2, 0.12);
     
     /* Plot Status Colors */
     --color-available: #10b981;
@@ -53,85 +53,16 @@
     --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* CAD Grid Color */
-    --grid-major: rgba(255, 255, 255, 0.04);
-    --grid-minor: rgba(255, 255, 255, 0.015);
-    --road-color: rgba(255, 255, 255, 0.05);
+    --grid-major: rgba(118, 153, 4, 0.06);
+    --grid-minor: rgba(118, 153, 4, 0.02);
+    --road-color: rgba(118, 153, 4, 0.04);
 }
 
 /* -------------------------------------------------------------
  * Theme Configurations
  * ------------------------------------------------------------- */
 
-/* Blueprint Mode */
-[data-theme="blueprint"] {
-    --bg-main: #0b1d3a;
-    --bg-surface: rgba(19, 46, 92, 0.7);
-    --bg-surface-opaque: #132e5c;
-    --bg-panel: rgba(10, 30, 65, 0.85);
-    --border-color: rgba(0, 242, 254, 0.15);
-    --border-hover: rgba(0, 242, 254, 0.3);
-    --text-primary: #e0f2fe;
-    --text-secondary: #7dd3fc;
-    --text-muted: #38bdf8;
-    --bg-input: rgba(0, 0, 0, 0.3);
-    
-    --primary: #00f2fe;
-    --primary-glow: rgba(0, 242, 254, 0.35);
-    --accent: #38bdf8;
-    --accent-glow: rgba(56, 189, 248, 0.2);
-    
-    --grid-major: rgba(0, 242, 254, 0.08);
-    --grid-minor: rgba(0, 242, 254, 0.03);
-    --road-color: rgba(0, 242, 254, 0.06);
-}
-
-/* Technical CAD Mode (Light/Precision) */
-[data-theme="cad"] {
-    --bg-main: #f4f6fa;
-    --bg-surface: rgba(255, 255, 255, 0.8);
-    --bg-surface-opaque: #ffffff;
-    --bg-panel: rgba(248, 250, 252, 0.9);
-    --border-color: #cbd5e1;
-    --border-hover: #94a3b8;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --bg-input: #ffffff;
-    
-    --primary: #0f172a;
-    --primary-glow: rgba(15, 23, 42, 0.15);
-    --accent: #2563eb;
-    --accent-glow: rgba(37, 99, 235, 0.1);
-    
-    --grid-major: rgba(15, 23, 42, 0.06);
-    --grid-minor: rgba(15, 23, 42, 0.02);
-    --road-color: rgba(15, 23, 42, 0.04);
-}
-
-/* Luxury Gold Mode */
-[data-theme="luxury"] {
-    --bg-main: #0c0b0a;
-    --bg-surface: rgba(24, 21, 18, 0.7);
-    --bg-surface-opaque: #1c1815;
-    --bg-panel: rgba(18, 16, 14, 0.85);
-    --border-color: rgba(212, 175, 55, 0.15);
-    --border-hover: rgba(212, 175, 55, 0.3);
-    --text-primary: #fdfbf7;
-    --text-secondary: #d4c8b3;
-    --text-muted: #998a72;
-    --bg-input: rgba(0, 0, 0, 0.3);
-    
-    --primary: #d4af37;
-    --primary-glow: rgba(212, 175, 55, 0.25);
-    --accent: #f3e5ab;
-    --accent-glow: rgba(243, 229, 171, 0.15);
-    
-    --grid-major: rgba(212, 175, 55, 0.04);
-    --grid-minor: rgba(212, 175, 55, 0.015);
-    --road-color: rgba(212, 175, 55, 0.03);
-}
-
-/* BCDI Brand Theme (Visiting Card Color Scheme) */
+/* Dark Mode (BCDI Lime Green - Dark) */
 [data-theme="bcdi"] {
     --bg-main: #0c0e08;
     --bg-surface: rgba(26, 31, 18, 0.7);
@@ -154,7 +85,7 @@
     --road-color: rgba(163, 201, 14, 0.03);
 }
 
-/* BCDI Brand Theme (Lime Green - Light Mode) */
+/* Light Mode (BCDI Lime Green - Light) */
 [data-theme="bcdi-light"] {
     --bg-main: #f5f7f2;
     --bg-surface: rgba(239, 243, 230, 0.75);
@@ -175,29 +106,6 @@
     --grid-major: rgba(118, 153, 4, 0.06);
     --grid-minor: rgba(118, 153, 4, 0.02);
     --road-color: rgba(118, 153, 4, 0.04);
-}
-
-/* Sleek Light Mode */
-[data-theme="light"] {
-    --bg-main: #f8fafc;
-    --bg-surface: rgba(241, 245, 249, 0.75);
-    --bg-surface-opaque: #f1f5f9;
-    --bg-panel: rgba(255, 255, 255, 0.88);
-    --border-color: rgba(0, 0, 0, 0.09);
-    --border-hover: rgba(0, 0, 0, 0.18);
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --bg-input: #ffffff;
-    
-    --primary: #4f46e5;
-    --primary-glow: rgba(79, 70, 229, 0.2);
-    --accent: #7c3aed;
-    --accent-glow: rgba(124, 58, 237, 0.12);
-    
-    --grid-major: rgba(0, 0, 0, 0.04);
-    --grid-minor: rgba(0, 0, 0, 0.015);
-    --road-color: rgba(0, 0, 0, 0.03);
 }
 
 /* -------------------------------------------------------------

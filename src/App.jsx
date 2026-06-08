@@ -197,7 +197,10 @@ export default function App() {
     const [searchQuery, setSearchQuery] = useState("");
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem("bcdi_active_theme");
-        return savedTheme || "bcdi";
+        if (savedTheme === "bcdi" || savedTheme === "bcdi-light") {
+            return savedTheme;
+        }
+        return "bcdi-light";
     });
 
     // Handle initial theme application to document root html element
@@ -694,6 +697,21 @@ export default function App() {
     }, []);
 
     if (isLoading) {
+        // Read theme from localStorage to apply theme-appropriate colors to loading screen
+        const savedTheme = localStorage.getItem("bcdi_active_theme");
+        const loadingTheme = (savedTheme === "bcdi" || savedTheme === "bcdi-light") ? savedTheme : "bcdi-light";
+        
+        // Define theme-based styles for the loading screen
+        const isDark = loadingTheme === "bcdi";
+        const bgGradient = isDark 
+            ? 'linear-gradient(135deg, #0c0e08 0%, #060704 100%)' 
+            : 'linear-gradient(135deg, #f5f7f2 0%, #e6ebd7 100%)';
+        const textColor = isDark ? '#f6f8f2' : '#1f2710';
+        const textSecondaryColor = isDark ? '#88927b' : '#728257';
+        const primaryColor = isDark ? '#a3c90e' : '#769904';
+        const primaryGlow = isDark ? 'rgba(163, 201, 14, 0.25)' : 'rgba(118, 153, 4, 0.2)';
+        const logoBorderColor = isDark ? 'rgba(163, 201, 14, 0.3)' : 'rgba(118, 153, 4, 0.3)';
+
         return (
             <div style={{
                 display: 'flex',
@@ -701,8 +719,8 @@ export default function App() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 minHeight: '100vh',
-                background: 'linear-gradient(135deg, #0f1219 0%, #06080c 100%)',
-                color: '#ffffff',
+                background: bgGradient,
+                color: textColor,
                 fontFamily: "'Outfit', 'Inter', sans-serif",
                 position: 'fixed',
                 top: 0,
@@ -717,8 +735,8 @@ export default function App() {
                         width: '96px',
                         height: '96px',
                         borderRadius: '50%',
-                        border: '3px solid rgba(118, 153, 4, 0.08)',
-                        borderTop: '3px solid var(--primary, #769904)',
+                        border: `3px solid ${isDark ? 'rgba(163, 201, 14, 0.08)' : 'rgba(118, 153, 4, 0.08)'}`,
+                        borderTop: `3px solid ${primaryColor}`,
                         animation: 'spin 1.2s linear infinite',
                         position: 'absolute'
                     }} />
@@ -732,7 +750,8 @@ export default function App() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 8px 24px rgba(118, 153, 4, 0.25)',
+                        boxShadow: `0 8px 24px ${primaryGlow}`,
+                        border: `1.5px solid ${logoBorderColor}`,
                         overflow: 'hidden',
                         zIndex: 2
                     }}>
@@ -753,10 +772,10 @@ export default function App() {
                     fontSize: '1.45rem',
                     fontWeight: 700,
                     letterSpacing: '1px',
-                    color: '#ffffff',
+                    color: textColor,
                     margin: '0 0 6px 0',
                     textTransform: 'uppercase',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                    textShadow: isDark ? '0 2px 10px rgba(0,0,0,0.5)' : 'none'
                 }}>
                     BCDI PORTAL
                 </h1>
@@ -764,8 +783,8 @@ export default function App() {
                 <h2 style={{
                     fontSize: '0.82rem',
                     fontWeight: 600,
-                    color: 'var(--primary, #769904)',
-                    margin: '0 0 16px 0',
+                    color: primaryColor,
+                    margin: 0,
                     letterSpacing: '1.5px',
                     textTransform: 'uppercase',
                     opacity: 0.9
@@ -773,32 +792,11 @@ export default function App() {
                     Bharathi City Developers
                 </h2>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div className="loading-pulse-dots" style={{ display: 'flex', gap: '4px' }}>
-                        <div className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #769904)', animation: 'pulse-dot 1.4s infinite ease-in-out both' }}></div>
-                        <div className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #769904)', animation: 'pulse-dot 1.4s infinite ease-in-out both', animationDelay: '0.2s' }}></div>
-                        <div className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #769904)', animation: 'pulse-dot 1.4s infinite ease-in-out both', animationDelay: '0.4s' }}></div>
-                    </div>
-                    <p style={{
-                        fontSize: '0.85rem',
-                        color: 'var(--text-secondary, #94a3b8)',
-                        margin: 0,
-                        fontWeight: 500,
-                        letterSpacing: '0.2px'
-                    }}>
-                        Connecting to Cloud Database...
-                    </p>
-                </div>
-
-                {/* Inline CSS for keyframe animations (spin & pulse) */}
+                {/* Inline CSS for keyframe animations (spin) */}
                 <style dangerouslySetInnerHTML={{__html: `
                     @keyframes spin {
                         0% { transform: rotate(0deg); }
                         100% { transform: rotate(360deg); }
-                    }
-                    @keyframes pulse-dot {
-                        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-                        40% { transform: scale(1.1); opacity: 1; }
                     }
                 `}} />
 
