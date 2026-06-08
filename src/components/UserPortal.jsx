@@ -803,7 +803,7 @@ export default function UserPortal({
 
                 {/* 2. LAYOUTS TAB */}
                 {activeTab === 'layouts' && (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <div className="layouts-tab-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                         
                         {!isExploring ? (
                             /* Selection landing page */
@@ -1911,6 +1911,8 @@ export default function UserPortal({
                 @media (max-width: 768px) {
                     .user-portal-container {
                         padding-bottom: 60px !important;
+                        overflow-y: auto !important;
+                        overflow-x: hidden !important;
                     }
 
                     /* Navbar: shrink height, hide nav tabs and user session pill */
@@ -1989,20 +1991,40 @@ export default function UserPortal({
                         grid-template-columns: 1fr !important;
                     }
 
-                    /* Map Explorer layout */
-                    .map-explorer-container {
-                        flex-direction: column !important;
+                    /* Map Explorer - complete mobile overhaul (movie ticket booking style) */
+                    
+                    /* The layouts tab wrapper needs scrolling on mobile */
+                    .layouts-tab-wrapper {
                         overflow-y: auto !important;
+                        overflow-x: hidden !important;
                     }
+
+                    /* The layouts tab outer div needs to allow scrolling */
+                    .map-explorer-container {
+                        overflow-y: auto !important;
+                        overflow-x: hidden !important;
+                        height: auto !important;
+                        min-height: 100% !important;
+                    }
+
                     .map-explorer-header {
                         flex-direction: column !important;
                         align-items: flex-start !important;
                         gap: 8px !important;
                         padding: 8px 12px !important;
+                        flex-shrink: 0 !important;
                     }
                     .map-explorer-header .header-left {
                         flex-wrap: wrap;
                         gap: 6px !important;
+                        width: 100%;
+                    }
+                    .map-explorer-header .header-left .btn-secondary {
+                        padding: 5px 10px !important;
+                        font-size: 0.7rem !important;
+                    }
+                    .map-explorer-header .header-left > div {
+                        font-size: 0.72rem !important;
                     }
                     .map-explorer-header .header-center {
                         display: none !important;
@@ -2015,53 +2037,62 @@ export default function UserPortal({
                     .map-explorer-header .header-right .status-legends {
                         display: none !important;
                     }
+
+                    /* Workspace: stack everything vertically, allow natural scroll */
                     .map-explorer-workspace {
                         flex-direction: column !important;
                         height: auto !important;
                         min-height: 0 !important;
+                        overflow: visible !important;
                     }
 
-                    /* Plots sidebar on mobile: hidden by default, show as overlay */
+                    /* Hide the plots sidebar completely on mobile - users tap on map directly */
                     .plots-sidebar {
-                        width: 100% !important;
-                        max-height: 180px !important;
-                        border-right: none !important;
-                        border-bottom: 1px solid var(--border-color) !important;
-                        flex-shrink: 0 !important;
-                    }
-                    .plots-sidebar-collapsed-mobile {
-                        max-height: 0 !important;
-                        overflow: hidden !important;
-                        padding: 0 !important;
-                        border: none !important;
+                        display: none !important;
                     }
 
-                    /* Collapse toggle: hide on mobile */
+                    /* Hide sidebar collapse toggle */
                     .sidebar-collapse-btn {
                         display: none !important;
                     }
 
-                    /* Map canvas */
-                    .map-canvas-wrapper {
-                        min-height: 300px !important;
-                        flex: 1 !important;
+                    /* Map canvas: give it a proper fixed height so it's visible & touchable */
+                    .map-workspace {
+                        height: 55vh !important;
+                        min-height: 280px !important;
+                        max-height: 55vh !important;
+                        flex: none !important;
+                        width: 100% !important;
                     }
 
-                    /* Booking details drawer on mobile */
+                    /* Booking editor panel: flows INLINE below the map (NOT fixed overlay) */
                     .editor-panel {
-                        position: fixed !important;
-                        bottom: 60px !important;
-                        left: 0 !important;
-                        right: 0 !important;
-                        top: auto !important;
+                        position: relative !important;
                         width: 100% !important;
-                        max-height: 60vh !important;
-                        border-radius: 16px 16px 0 0 !important;
-                        z-index: 200 !important;
-                        box-shadow: 0 -8px 30px rgba(0,0,0,0.3) !important;
+                        max-height: none !important;
+                        height: auto !important;
+                        border-radius: 0 !important;
+                        border-left: none !important;
+                        border-top: 1px solid var(--border-color) !important;
+                        z-index: 1 !important;
+                        box-shadow: none !important;
+                        top: auto !important;
+                        bottom: auto !important;
+                        left: auto !important;
+                        right: auto !important;
+                        flex-shrink: 0 !important;
+                        transform: none !important;
+                        opacity: 1 !important;
+                        overflow: visible !important;
                     }
                     .editor-panel.collapsed {
-                        transform: translateY(100%) !important;
+                        display: none !important;
+                        transform: none !important;
+                    }
+                    .editor-panel .panel-content {
+                        overflow: visible !important;
+                        max-height: none !important;
+                        padding-bottom: 80px !important;
                     }
 
                     /* Locations directory */
