@@ -767,21 +767,29 @@ header {
 /* Plot Text Labels */
 .plot-label {
     fill: var(--text-primary);
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     pointer-events: none;
     text-anchor: middle;
     dominant-baseline: middle;
+    paint-order: stroke fill;
+    stroke: var(--bg-main);
+    stroke-width: 4px;
+    stroke-linejoin: round;
     transition: fill var(--transition-fast), font-size var(--transition-fast);
 }
 
 .plot-label-sub {
     fill: var(--text-muted);
-    font-size: 8px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
     pointer-events: none;
     text-anchor: middle;
     dominant-baseline: middle;
+    paint-order: stroke fill;
+    stroke: var(--bg-main);
+    stroke-width: 3px;
+    stroke-linejoin: round;
 }
 
 /* When Zoom is too small, hide subtexts automatically via CSS */
@@ -1573,6 +1581,55 @@ header {
     position: absolute;
     top: 0;
     left: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.canvas-header-bar-trigger {
+    width: 100%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-workspace.has-selected-plot .canvas-header-bar,
+.map-workspace.has-selected-plot .canvas-header-bar-trigger {
+    width: calc(100% - 360px);
+}
+
+/* Auto-hiding controls transitions in MapWorkspace */
+.map-workspace .canvas-header-bar {
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+}
+
+.map-workspace .canvas-header-bar-trigger:hover + .canvas-header-bar,
+.map-workspace .canvas-header-bar:hover,
+.map-workspace .canvas-header-bar:focus-within {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Premium styling for consolidated top bar toggle buttons */
+.btn-icon-toggle {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-icon-toggle:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-primary) !important;
+    transform: scale(1.1);
+}
+
+.btn-icon-toggle.active {
+    background: rgba(118, 153, 4, 0.16) !important;
+    color: var(--primary) !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-icon-toggle.active:hover {
+    background: rgba(118, 153, 4, 0.25) !important;
 }
 
 .canvas-file-info {
@@ -1650,7 +1707,9 @@ header {
 /* Paper Sheet Layout on Dark CAD Canvas */
 #ref-overlay-paper {
     fill: #ffffff;
-    filter: drop-shadow(0px 8px 30px rgba(0,0,0,0.55));
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 1.5px;
+    filter: drop-shadow(0px 12px 40px rgba(0, 0, 0, 0.35)) drop-shadow(0px 1px 3px rgba(0, 0, 0, 0.1));
 }
 
 /* Collapsible layouts sidebar styling */

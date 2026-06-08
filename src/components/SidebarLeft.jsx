@@ -172,17 +172,7 @@ export default function SidebarLeft({
                         </button>
                     </div>
 
-                    {mapData.backgroundImage?.href && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px', borderTop: '1px dashed var(--border-color)', paddingTop: '6px' }}>
-                            <div className="form-group" style={{ gap: '2px' }}>
-                                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
-                                    <span>Opacity {isLocked && "(Locked)"}</span>
-                                    <span>{Math.round(mapData.backgroundImage.opacity * 100)}%</span>
-                                </label>
-                                <input type="range" min="0" max="1" step="0.05" value={mapData.backgroundImage.opacity || 0.5} onChange={(e) => updateBgProps('opacity', parseFloat(e.target.value))} style={{ height: '4px', padding: 0 }} disabled={isLocked} />
-                            </div>
-                        </div>
-                    )}
+
                 </div>
             </details>
         </aside>

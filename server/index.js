@@ -564,7 +564,11 @@ app.get('/api/health', async (req, res) => {
 });
 
 // --- Start Server ---
-app.listen(PORT, () => {
-    console.log(`🚀 BCDI API Server running on http://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 BCDI API Server running on http://localhost:${PORT}`);
+        console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+    });
+}
+
+module.exports = app;

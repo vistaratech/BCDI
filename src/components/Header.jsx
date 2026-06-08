@@ -34,7 +34,7 @@ export default function Header({ theme, setTheme, mapData, showToast, role, setR
         <header>
             <div className="logo-container">
                 <div style={{ width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--primary)', boxShadow: '0 2px 8px var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', flexShrink: 0 }}>
-                    <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.18)', objectPosition: '49.85% 46%' }} />
+                    <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }} />
                 </div>
                 <div className="logo-text">
                     <h1 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

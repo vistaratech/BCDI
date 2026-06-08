@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
     Home, 
     Map, 
@@ -54,6 +54,12 @@ export default function UserPortal({
             setActiveVideo(0);
         }
     }, [promoVideos, activeVideo]);
+
+    // Reset selected plot when navigating away, switching tabs, or changing layouts
+    useEffect(() => {
+        setUserSelectedPlotId(null);
+        setBookingSuccess(null);
+    }, [activeTab, isExploring, selectedLocation.layoutId]);
 
     const systemSettings = useMemo(() => {
         return database.settings || {
@@ -134,6 +140,25 @@ export default function UserPortal({
         return database.layouts.find(l => l.id === selectedLocation.layoutId) || database.layouts[0];
     }, [database.layouts, selectedLocation.layoutId]);
 
+    const setMapData = useCallback((newDataOrFunc) => {
+        setDatabase(prevDb => {
+            const targetId = selectedLocation.layoutId || (prevDb.layouts[0] && prevDb.layouts[0].id);
+            if (!targetId) return prevDb;
+            
+            const newLayouts = prevDb.layouts.map(l => {
+                if (l.id === targetId) {
+                    const updated = typeof newDataOrFunc === 'function' ? newDataOrFunc(l) : newDataOrFunc;
+                    return { ...l, ...updated };
+                }
+                return l;
+            });
+            return {
+                ...prevDb,
+                layouts: newLayouts
+            };
+        });
+    }, [selectedLocation.layoutId, setDatabase]);
+
     // Calculate details count for active layout
     const plotsCount = useMemo(() => {
         if (!activeLayout) return { total: 0, available: 0, reserved: 0, sold: 0, premium: 0 };
@@ -163,6 +188,49 @@ export default function UserPortal({
         if (!userSelectedPlotId || !activeLayout) return null;
         return activeLayout.plots.find(p => p.id === userSelectedPlotId);
     }, [userSelectedPlotId, activeLayout]);
+
+    // Numerical sort and search filter for plots in sidebar
+    const filteredPlots = useMemo(() => {
+        if (!activeLayout || !activeLayout.plots) return [];
+        return activeLayout.plots
+            .filter(p => !p.classification || p.classification === 'plot')
+            .filter(p => {
+                if (filterCategory === 'available') return p.status === 'available';
+                if (filterCategory === 'premium') return p.status === 'premium';
+                return true;
+            })
+            .filter(p => {
+                if (!searchQuery.trim()) return true;
+                return p.id.toLowerCase().includes(searchQuery.toLowerCase().trim());
+            })
+            .sort((a, b) => {
+                const numA = parseInt(a.id.replace(/\D/g, ''), 10);
+                const numB = parseInt(b.id.replace(/\D/g, ''), 10);
+                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                if (!isNaN(numA)) return -1;
+                if (!isNaN(numB)) return 1;
+                return a.id.localeCompare(b.id);
+            });
+    }, [activeLayout, filterCategory, searchQuery]);
+
+    // Unified plot selection callback
+    const handleSelectPlot = useCallback((id) => {
+        if (id) {
+            const plot = activeLayout.plots.find(p => p.id === id);
+            if (plot) {
+                if (filterCategory === 'available' && plot.status !== 'available') {
+                    showToast("Plot is not Available. Filter is set to Available Only.", "warning");
+                    return;
+                }
+                if (filterCategory === 'premium' && plot.status !== 'premium') {
+                    showToast("Plot is not Premium. Filter is set to Premium Only.", "warning");
+                    return;
+                }
+            }
+        }
+        setUserSelectedPlotId(id);
+        setBookingSuccess(null);
+    }, [activeLayout, filterCategory, showToast]);
 
     // Handle plot booking submission
     const handleBookPlot = (e) => {
@@ -307,7 +375,7 @@ export default function UserPortal({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setActiveTab('home')}>
                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff' }}>
-                            <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.18)', objectPosition: '49.85% 46%' }} />
+                            <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.5px', lineHeight: '1.2' }}>BCDI PORTAL</span>
@@ -418,21 +486,22 @@ export default function UserPortal({
                         
                         {/* Hero Section Banner */}
                         <div className="hero-banner" style={{
-                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%)',
+                            background: 'linear-gradient(135deg, rgba(118, 153, 4, 0.08) 0%, rgba(30, 41, 59, 0.5) 100%)',
                             border: '1px solid var(--border-color)',
                             borderRadius: 'var(--radius-lg)',
                             padding: '60px 40px',
                             textAlign: 'center',
                             position: 'relative',
                             overflow: 'hidden',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                            flexShrink: 0
                         }}>
                             <div style={{ position: 'absolute', top: '-20%', left: '-10%', width: '300px', height: '300px', background: 'var(--primary-glow)', filter: 'blur(100px)', borderRadius: '50%', zIndex: 0 }} />
                             <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: '300px', height: '300px', background: 'var(--accent-glow)', filter: 'blur(100px)', borderRadius: '50%', zIndex: 0 }} />
 
                             <div style={{ position: 'relative', zIndex: 1, maxWidth: '700px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                 <span style={{ textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '2px', color: 'var(--primary)' }}>Welcome to BCDI Developers Portal</span>
-                                <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: '1.2' }}>
+                                <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: 'var(--text-primary)', lineHeight: '1.25' }}>
                                     Find Your Perfect Plot & Build Your Dream Land
                                 </h1>
                                 <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
@@ -459,8 +528,8 @@ export default function UserPortal({
                         </div>
 
                         {/* Global Statistics KPIs Row */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-                            <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', flexShrink: 0 }}>
+                            <div className="kpi-card" style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <div style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', padding: '12px', borderRadius: '50%' }}>
                                     <Building2 size={24} />
                                 </div>
@@ -470,7 +539,7 @@ export default function UserPortal({
                                 </div>
                             </div>
 
-                            <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div className="kpi-card" style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <div style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--color-available)', padding: '12px', borderRadius: '50%' }}>
                                     <ShieldCheck size={24} />
                                 </div>
@@ -480,7 +549,7 @@ export default function UserPortal({
                                 </div>
                             </div>
 
-                            <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div className="kpi-card" style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <div style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--color-sold)', padding: '12px', borderRadius: '50%' }}>
                                     <CheckCircle size={24} />
                                 </div>
@@ -492,7 +561,7 @@ export default function UserPortal({
                         </div>
 
                         {/* Interactive Project Video Walkthroughs */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flexShrink: 0 }}>
                             <div>
                                 <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Building2 size={18} style={{ color: 'var(--primary)' }} /> BCDI Project Video Walkthroughs
@@ -862,17 +931,20 @@ export default function UserPortal({
                         ) : (
                             /* Map Explorer page */
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-                                
-                                {/* Inner Header bar with Location info and movie booking style progress */}
                                 <div style={{ 
                                     background: 'var(--bg-panel)', 
                                     borderBottom: '1px solid var(--border-color)', 
                                     display: 'flex', 
-                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 16px',
                                     zIndex: 50,
-                                    flexShrink: 0
+                                    flexShrink: 0,
+                                    gap: '16px',
+                                    flexWrap: 'wrap'
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px dashed var(--border-color)' }}>
+                                    {/* Left: Navigation and Location info */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <button 
                                             className="btn-secondary" 
                                             onClick={() => {
@@ -884,38 +956,20 @@ export default function UserPortal({
                                         >
                                             <ArrowLeft size={14} /> Back to Locations
                                         </button>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                            <MapPin size={14} style={{ color: 'var(--primary)' }} />
-                                            <span>{selectedLocation.state} / {selectedLocation.district} / {activeLayout.name} ({activeLayout.area || 'Vijayamangalam'})</span>
-                                        </div>
-                                        
-                                        {/* Status legend indicators */}
-                                        <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem', fontWeight: 600 }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-available)' }}>
-                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-available)' }} /> Available ({plotsCount.available})
-                                            </span>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-premium)' }}>
-                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-premium)' }} /> Premium ({plotsCount.premium})
-                                            </span>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-reserved)' }}>
-                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-reserved)' }} /> Reserved ({plotsCount.reserved})
-                                            </span>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-sold)' }}>
-                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-sold)' }} /> Sold ({plotsCount.sold})
-                                            </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            <MapPin size={13} style={{ color: 'var(--primary)' }} />
+                                            <span>{selectedLocation.state} / {selectedLocation.district} / {activeLayout.name}</span>
                                         </div>
                                     </div>
 
-                                    {/* Occupancy progress bar - Theater Style */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '8px 16px', background: 'rgba(0,0,0,0.1)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                                            <Building2 size={12} style={{ color: 'var(--primary)' }} />
-                                            <span>Layout Booking Occupancy:</span>
-                                            <strong style={{ color: 'var(--text-primary)' }}>
-                                                {plotsCount.total > 0 ? Math.round(((plotsCount.sold + plotsCount.reserved) / plotsCount.total) * 100) : 0}% Booked
-                                            </strong>
-                                        </div>
-                                        <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden', maxWidth: '300px' }}>
+                                    {/* Center: Booking Occupancy Progress Bar */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                        <Building2 size={12} style={{ color: 'var(--primary)' }} />
+                                        <span>Occupancy:</span>
+                                        <strong style={{ color: 'var(--text-primary)' }}>
+                                            {plotsCount.total > 0 ? Math.round(((plotsCount.sold + plotsCount.reserved) / plotsCount.total) * 100) : 0}%
+                                        </strong>
+                                        <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
                                             <div style={{ 
                                                 width: `${plotsCount.total > 0 ? ((plotsCount.sold + plotsCount.reserved) / plotsCount.total) * 100 : 0}%`, 
                                                 height: '100%', 
@@ -923,29 +977,48 @@ export default function UserPortal({
                                                 borderRadius: '3px' 
                                             }} />
                                         </div>
-                                        
-                                        {/* Filter selector */}
-                                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+                                    </div>
+
+                                    {/* Right: Status Legend Indicators & Filter Selector */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        {/* Status legends */}
+                                        <div style={{ display: 'flex', gap: '10px', fontSize: '0.68rem', fontWeight: 600 }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-available)' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-available)' }} /> Avail ({plotsCount.available})
+                                            </span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-premium)' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-premium)' }} /> Prem ({plotsCount.premium})
+                                            </span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-reserved)' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-reserved)' }} /> Res ({plotsCount.reserved})
+                                            </span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-sold)' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-sold)' }} /> Sold ({plotsCount.sold})
+                                            </span>
+                                        </div>
+
+                                        {/* Filters */}
+                                        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                                             <button 
                                                 onClick={() => setFilterCategory('all')} 
                                                 className={`btn-filter ${filterCategory === 'all' ? 'active' : ''}`}
-                                                style={{ padding: '3px 8px', fontSize: '0.68rem' }}
+                                                style={{ padding: '3px 6px', fontSize: '0.68rem', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
                                             >
-                                                All Plots ({plotsCount.total})
+                                                All
                                             </button>
                                             <button 
                                                 onClick={() => setFilterCategory('available')} 
                                                 className={`btn-filter ${filterCategory === 'available' ? 'active' : ''}`}
-                                                style={{ padding: '3px 8px', fontSize: '0.68rem' }}
+                                                style={{ padding: '3px 6px', fontSize: '0.68rem', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
                                             >
-                                                Available Only ({plotsCount.available})
+                                                Available
                                             </button>
                                             <button 
                                                 onClick={() => setFilterCategory('premium')} 
                                                 className={`btn-filter ${filterCategory === 'premium' ? 'active' : ''}`}
-                                                style={{ padding: '3px 8px', fontSize: '0.68rem' }}
+                                                style={{ padding: '3px 6px', fontSize: '0.68rem', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
                                             >
-                                                Premium Only ({plotsCount.premium})
+                                                Premium
                                             </button>
                                         </div>
                                     </div>
@@ -953,28 +1026,141 @@ export default function UserPortal({
 
                                 {/* Main Map and Checkout workspace split */}
                                 <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+                                    {/* Left Sidebar: Plots Directory */}
+                                    <aside className="plots-sidebar" style={{
+                                        width: '280px',
+                                        flexShrink: 0,
+                                        borderRight: '1px solid var(--border-color)',
+                                        background: 'var(--bg-panel)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        height: '100%',
+                                        zIndex: 40,
+                                        overflow: 'hidden'
+                                    }}>
+                                        {/* Sidebar Header with Title & Count */}
+                                        <div style={{
+                                            padding: '16px 20px',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.5px', margin: 0 }}>
+                                                    PLOTS DIRECTORY
+                                                </h3>
+                                                <span style={{ 
+                                                    fontSize: '0.7rem', 
+                                                    color: 'var(--primary)', 
+                                                    background: 'var(--primary-glow)', 
+                                                    padding: '2px 8px', 
+                                                    borderRadius: '10px',
+                                                    fontWeight: 700
+                                                }}>
+                                                    {filteredPlots.length} Plots
+                                                </span>
+                                            </div>
+                                            
+                                            {/* Search box input */}
+                                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                                <Search size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Search plot number..." 
+                                                    value={searchQuery}
+                                                    onChange={e => setSearchQuery(e.target.value)}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px 8px 34px',
+                                                        fontSize: '0.8rem',
+                                                        borderRadius: 'var(--radius-sm)',
+                                                        background: 'var(--bg-input)',
+                                                        border: '1px solid var(--border-color)',
+                                                        color: 'var(--text-primary)',
+                                                        outline: 'none',
+                                                        transition: 'border-color 0.2s ease'
+                                                    }}
+                                                    className="sidebar-search-input"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Scrollable Plots List */}
+                                        <div style={{
+                                            flex: 1,
+                                            overflowY: 'auto',
+                                            padding: '12px 16px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }} className="custom-scrollbar">
+                                            {filteredPlots.length === 0 ? (
+                                                <div style={{ 
+                                                    textAlign: 'center', 
+                                                    padding: '40px 10px', 
+                                                    color: 'var(--text-muted)', 
+                                                    fontSize: '0.78rem' 
+                                                }}>
+                                                    No matching plots found
+                                                </div>
+                                            ) : (
+                                                filteredPlots.map(p => {
+                                                    const isSelected = userSelectedPlotId === p.id;
+                                                    return (
+                                                        <div
+                                                            key={p.id}
+                                                            onClick={() => handleSelectPlot(p.id)}
+                                                            className={`plot-list-item ${isSelected ? 'selected' : ''}`}
+                                                            style={{
+                                                                padding: '12px 14px',
+                                                                background: isSelected ? 'var(--primary-glow)' : 'rgba(255,255,255,0.01)',
+                                                                border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                                                                borderRadius: 'var(--radius-sm)',
+                                                                cursor: 'pointer',
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                            }}
+                                                        >
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                <span style={{ 
+                                                                    fontSize: '0.85rem', 
+                                                                    fontWeight: 700, 
+                                                                    color: isSelected ? 'var(--primary)' : 'var(--text-primary)' 
+                                                                }}>
+                                                                    {p.id}
+                                                                </span>
+                                                                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                                                                    {p.area ? `${p.area.toFixed(1)} m²` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <span className={`status-badge-pill badge-${p.status}`} style={{
+                                                                    fontSize: '0.62rem',
+                                                                    fontWeight: 700,
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '20px',
+                                                                    textTransform: 'uppercase',
+                                                                    letterSpacing: '0.2px'
+                                                                }}>
+                                                                    {p.status}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </aside>
+
                                     <MapWorkspace 
                                         mapData={activeLayout}
-                                        setMapData={() => {}} // Read-only in User portal
+                                        setMapData={setMapData}
                                         selectedPlotId={userSelectedPlotId}
-                                        setSelectedPlotId={(id) => {
-                                            // Make sure the plot matches category filters
-                                            if (id) {
-                                                const plot = activeLayout.plots.find(p => p.id === id);
-                                                if (plot) {
-                                                    if (filterCategory === 'available' && plot.status !== 'available') {
-                                                        showToast("Plot is not Available. Filter is set to Available Only.", "warning");
-                                                        return;
-                                                    }
-                                                    if (filterCategory === 'premium' && plot.status !== 'premium') {
-                                                        showToast("Plot is not Premium. Filter is set to Premium Only.", "warning");
-                                                        return;
-                                                    }
-                                                }
-                                            }
-                                            setUserSelectedPlotId(id);
-                                            setBookingSuccess(null);
-                                        }}
+                                        setSelectedPlotId={handleSelectPlot}
                                         currentTool={currentTool}
                                         setCurrentTool={setCurrentTool}
                                         layers={layers}
@@ -989,7 +1175,7 @@ export default function UserPortal({
                                     />
 
                                     {/* Sidebar booking details drawer */}
-                                    <aside className={`editor-panel ${userSelectedPlotId ? '' : 'collapsed'}`} style={{ width: '360px', flexShrink: 0 }}>
+                                    <aside className={`editor-panel ${userSelectedPlotId ? '' : 'collapsed'}`} style={{ width: '360px', flexShrink: 0, top: 0, height: '100%' }}>
                                         {selectedPlot && (
                                             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                                 <div className="panel-header" style={{ padding: '16px 20px' }}>
@@ -1577,6 +1763,68 @@ export default function UserPortal({
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(4px); }
                     to { opacity: 1; transform: translateY(0); }
+                }
+                .kpi-card {
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .kpi-card:hover {
+                    transform: translateY(-4px);
+                    border-color: var(--primary) !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+                    background: rgba(255, 255, 255, 0.02) !important;
+                }
+                .plot-list-item {
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .plot-list-item:hover {
+                    transform: translateX(2px);
+                    background: rgba(255, 255, 255, 0.03) !important;
+                    border-color: var(--primary) !important;
+                }
+                .plot-list-item.selected {
+                    background: var(--primary-glow) !important;
+                    border-color: var(--primary) !important;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .status-badge-pill {
+                    font-size: 0.62rem;
+                    font-weight: 700;
+                    padding: 2px 8px;
+                    border-radius: 20px;
+                    text-transform: uppercase;
+                }
+                .status-badge-pill.badge-available {
+                    background: var(--color-available-glow);
+                    color: var(--color-available);
+                }
+                .status-badge-pill.badge-sold {
+                    background: var(--color-sold-glow);
+                    color: var(--color-sold);
+                }
+                .status-badge-pill.badge-reserved {
+                    background: var(--color-reserved-glow);
+                    color: var(--color-reserved);
+                }
+                .status-badge-pill.badge-premium {
+                    background: var(--color-premium-glow);
+                    color: var(--color-premium);
+                }
+                .sidebar-search-input:focus {
+                    border-color: var(--primary) !important;
+                    box-shadow: 0 0 0 2px var(--primary-glow);
+                }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 3px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.2);
                 }
             `}} />
 

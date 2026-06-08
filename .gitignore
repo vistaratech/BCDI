@@ -3,3 +3,6 @@ dist/
 .env
 server/node_modules/
 server/.env
+disassembled_output.txt
+disassembly_parts/
+

@@ -331,9 +331,57 @@ class MapRenderer {
     }
 
     resetZoom() {
-        this.zoom = 0.85;
-        this.panX = 100;
-        this.panY = 60;
+        if (!this.svg) return;
+        const rect = this.svg.getBoundingClientRect();
+        const svgW = 1600;
+        const svgH = 1000;
+        
+        let bgW = svgW;
+        let bgH = svgH;
+        let bgX = 0;
+        let bgY = 0;
+        
+        if (this.data.backgroundImage) {
+            bgX = this.data.backgroundImage.x !== undefined ? this.data.backgroundImage.x : 0;
+            bgY = this.data.backgroundImage.y !== undefined ? this.data.backgroundImage.y : 0;
+            bgW = this.data.backgroundImage.width !== undefined ? this.data.backgroundImage.width : svgW;
+            bgH = this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : svgH;
+        }
+        
+        if (this.isAdmin) {
+            const padding = 30;
+            const availableW = rect.width > 0 ? rect.width - padding * 2 : svgW;
+            const availableH = rect.height > 0 ? rect.height - padding * 2 : svgH;
+            
+            const scaleX = availableW / bgW;
+            const scaleY = availableH / bgH;
+            const fitScale = Math.min(scaleX, scaleY, 1.25);
+            
+            this.zoom = Math.max(0.15, Math.round(fitScale * 100) / 100);
+            
+            this.panX = (availableW - bgW * this.zoom) / 2 - bgX * this.zoom + padding;
+            this.panY = (availableH - bgH * this.zoom) / 2 - bgY * this.zoom + padding;
+        } else {
+            // For customer view, use a fixed 85% zoom to ensure the map is prominent and large.
+            // All centering math is done in the SVG coordinate space (1600x1000) to prevent 
+            // mixing CSS pixels with SVG units, which causes vertical offset shifting and cut-offs at the top.
+            this.zoom = 0.85;
+            
+            const widthCSS = rect.width > 0 ? rect.width : 1640;
+            
+            // Drawer offset is 360px. Convert to SVG coordinate units.
+            const drawerWidthCSS = 360;
+            const drawerOffsetSVG = widthCSS > 800 ? drawerWidthCSS * (svgW / widthCSS) : 0;
+            
+            // Visible width and height in SVG coordinate units
+            const visibleWSVG = svgW - drawerOffsetSVG;
+            const visibleHSVG = svgH;
+            
+            // Center the sheet in SVG coordinate units
+            this.panX = (visibleWSVG - bgW * this.zoom) / 2 - bgX * this.zoom;
+            this.panY = (visibleHSVG - bgH * this.zoom) / 2 - bgY * this.zoom;
+        }
+        
         this.updateTransform();
         if (this.onZoomChange) this.onZoomChange(this.zoom);
     }
@@ -417,13 +465,33 @@ class MapRenderer {
             const bgW = this.data.backgroundImage.width !== undefined ? this.data.backgroundImage.width : 1600;
             const bgH = this.data.backgroundImage.height !== undefined ? this.data.backgroundImage.height : 1000;
 
+            // Create a dynamic clipPath to give the image and paper rounded corners
+            let clipPath = this.svg.querySelector("#paper-clip");
+            if (!clipPath) {
+                clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+                clipPath.setAttribute("id", "paper-clip");
+                this.svg.querySelector("defs").appendChild(clipPath);
+            }
+            clipPath.innerHTML = "";
+            const clipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            clipRect.setAttribute("x", bgX);
+            clipRect.setAttribute("y", bgY);
+            clipRect.setAttribute("width", bgW);
+            clipRect.setAttribute("height", bgH);
+            clipRect.setAttribute("rx", "16");
+            clipRect.setAttribute("ry", "16");
+            clipPath.appendChild(clipRect);
+
             // Render paper sheet background rectangle under layout plan
             const paper = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             paper.setAttribute("x", bgX);
             paper.setAttribute("y", bgY);
             paper.setAttribute("width", bgW);
             paper.setAttribute("height", bgH);
+            paper.setAttribute("rx", "16");
+            paper.setAttribute("ry", "16");
             paper.setAttribute("id", "ref-overlay-paper");
+            paper.setAttribute("clip-path", "url(#paper-clip)");
             paper.setAttribute("pointer-events", "none");
 
             const existingPaper = this.viewport.querySelector("#ref-overlay-paper");
@@ -438,6 +506,7 @@ class MapRenderer {
             img.setAttribute("height", bgH);
             img.setAttribute("opacity", this.data.backgroundImage.opacity !== undefined ? this.data.backgroundImage.opacity : 1.0);
             img.setAttribute("preserveAspectRatio", "none");
+            img.setAttribute("clip-path", "url(#paper-clip)");
             img.setAttribute("pointer-events", "none");
             img.setAttribute("id", "ref-overlay-img");
             

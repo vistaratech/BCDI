@@ -229,6 +229,15 @@ export default function App() {
             window.removeEventListener('hashchange', checkRoute);
         };
     }, []);
+
+    // Reset selected plot and edit mode when navigating away from layouts view
+    useEffect(() => {
+        if (adminTab !== 'layouts') {
+            setSelectedPlotId(null);
+            setEditMode(false);
+        }
+    }, [adminTab]);
+
     const [layoutsCollapsed, setLayoutsCollapsed] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
     const [navCollapsed, setNavCollapsed] = useState(false);
@@ -838,7 +847,7 @@ export default function App() {
                             {/* Project Switcher Profile Card at the bottom */}
                             <div className="nav-profile-card">
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', flexShrink: 0 }}>
-                                    <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.18)', objectPosition: '49.85% 46%' }} />
+                                    <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }} />
                                 </div>
                                 <div className="nav-profile-info">
                                     <div className="nav-profile-title">BCDI Developers</div>
