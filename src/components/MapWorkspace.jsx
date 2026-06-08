@@ -124,7 +124,9 @@ export default function MapWorkspace({
                     }
                 }
             } else {
-                // Keep the current zoom and position when plot selection changes in customer portal
+                // For customer view, adjust pan positioning to account for the drawer overlay but retain user's current zoom scale
+                rendererRef.current.resetZoom(true);
+                setCurrentZoom(rendererRef.current.zoom);
             }
         }
     }, [selectedPlotId]);

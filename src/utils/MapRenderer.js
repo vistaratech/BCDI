@@ -353,7 +353,7 @@ class MapRenderer {
         this.render();
     }
 
-    resetZoom() {
+    resetZoom(keepCurrentZoom = false) {
         if (!this.svg) return;
         const rect = this.svg.getBoundingClientRect();
         const svgW = 1600;
@@ -372,7 +372,9 @@ class MapRenderer {
         }
         
         // Use a fixed 0.9 zoom to make the layout sheet prominent and large, exactly like the UserPortal layout view.
-        this.zoom = 0.9;
+        if (!keepCurrentZoom) {
+            this.zoom = 0.9;
+        }
         
         const widthCSS = rect.width > 0 ? rect.width : 1640;
         
