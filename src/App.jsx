@@ -7,6 +7,7 @@ import SidebarRight from './components/SidebarRight';
 import MapWorkspace from './components/MapWorkspace';
 import ToastContainer from './components/ToastContainer';
 import INITIAL_MAP_DATA from './utils/initialMapData';
+import { fetchDatabase, saveFullDatabase, uploadImage } from './utils/api';
 import UserPortal from './components/UserPortal';
 import BookingsManager from './components/BookingsManager';
 import VideosManager from './components/VideosManager';
@@ -51,62 +52,133 @@ const DEFAULT_PROMO_VIDEOS = [
 ];
 
 export default function App() {
-    const [database, setDatabase] = useState(() => {
-        const savedDb = localStorage.getItem("aerostage_multilayouts_database");
-        if (savedDb) {
-            try {
-                const parsed = JSON.parse(savedDb);
-                if (parsed && Array.isArray(parsed.layouts)) {
-                    parsed.layouts = parsed.layouts.map(l => {
-                        let updated = { ...l };
-                        if (l.name === "Harmony Springs") {
-                            updated.name = "BCDI Layout Sheet";
-                        }
-                        updated.state = l.state || "Tamil Nadu";
-                        updated.district = l.district || "Erode";
-                        updated.area = l.area || "Vijayamangalam";
-                        return updated;
-                    });
-                }
-                parsed.bookings = parsed.bookings || [];
-                parsed.videos = parsed.videos || DEFAULT_PROMO_VIDEOS;
-                parsed.settings = parsed.settings || DEFAULT_SETTINGS;
-                return parsed;
-            } catch (e) {
-                console.error("Error reading saved multi-layout database.", e);
-            }
-        }
-        
-        // Migration from legacy key
-        const savedLegacy = localStorage.getItem("aerostage_map_database");
-        let legacyLayoutData = null;
-        if (savedLegacy) {
-            try {
-                legacyLayoutData = JSON.parse(savedLegacy);
-            } catch (e) {
-                console.error("Error reading legacy database.", e);
-            }
-        }
-
-        const defaultLayout = legacyLayoutData || { ...INITIAL_MAP_DATA };
-        
-        return {
-            activeLayoutId: "default",
-            layouts: [
-                {
-                    id: "default",
-                    name: "BCDI Layout Sheet",
-                    state: "Tamil Nadu",
-                    district: "Erode",
-                    area: "Vijayamangalam",
-                    ...defaultLayout
-                }
-            ],
-            bookings: [],
-            videos: DEFAULT_PROMO_VIDEOS,
-            settings: DEFAULT_SETTINGS
-        };
+    const [database, setDatabase] = useState({
+        activeLayoutId: "default",
+        layouts: [],
+        bookings: [],
+        videos: [],
+        settings: DEFAULT_SETTINGS
     });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadDatabase = async () => {
+            try {
+                const data = await fetchDatabase();
+                
+                // One-time migration
+                const savedDb = localStorage.getItem("aerostage_multilayouts_database");
+                const savedLegacy = localStorage.getItem("aerostage_map_database");
+
+                if ((!data.layouts || data.layouts.length === 0) && (savedDb || savedLegacy)) {
+                    showToast("Migrating offline data to cloud database...", "info");
+                    let migratedData = null;
+
+                    if (savedDb) {
+                        try {
+                            migratedData = JSON.parse(savedDb);
+                        } catch (e) {
+                            console.error("Migration parse error", e);
+                        }
+                    }
+
+                    if (!migratedData && savedLegacy) {
+                        try {
+                            const legacyLayoutData = JSON.parse(savedLegacy);
+                            migratedData = {
+                                activeLayoutId: "default",
+                                layouts: [
+                                    {
+                                        id: "default",
+                                        name: "BCDI Layout Sheet",
+                                        state: "Tamil Nadu",
+                                        district: "Erode",
+                                        area: "Vijayamangalam",
+                                        ...legacyLayoutData
+                                    }
+                                ],
+                                bookings: [],
+                                videos: DEFAULT_PROMO_VIDEOS,
+                                settings: DEFAULT_SETTINGS
+                            };
+                        } catch (e) {
+                            console.error("Legacy migration parse error", e);
+                        }
+                    }
+
+                    if (migratedData) {
+                        migratedData.layouts = (migratedData.layouts || []).map(l => ({
+                            ...l,
+                            state: l.state || "Tamil Nadu",
+                            district: l.district || "Erode",
+                            area: l.area || "Vijayamangalam"
+                        }));
+                        migratedData.bookings = migratedData.bookings || [];
+                        migratedData.videos = migratedData.videos || DEFAULT_PROMO_VIDEOS;
+                        migratedData.settings = migratedData.settings || DEFAULT_SETTINGS;
+
+                        await saveFullDatabase(migratedData);
+                        setDatabase(migratedData);
+                        showToast("Offline data successfully migrated to PostgreSQL!", "success");
+                    } else {
+                        const defaultDb = {
+                            activeLayoutId: "default",
+                            layouts: [
+                                {
+                                    id: "default",
+                                    name: "BCDI Layout Sheet",
+                                    state: "Tamil Nadu",
+                                    district: "Erode",
+                                    area: "Vijayamangalam",
+                                    ...INITIAL_MAP_DATA
+                                }
+                            ],
+                            bookings: [],
+                            videos: DEFAULT_PROMO_VIDEOS,
+                            settings: DEFAULT_SETTINGS
+                        };
+                        await saveFullDatabase(defaultDb);
+                        setDatabase(defaultDb);
+                    }
+                } else if (!data.layouts || data.layouts.length === 0) {
+                    const defaultDb = {
+                        activeLayoutId: "default",
+                        layouts: [
+                            {
+                                id: "default",
+                                name: "BCDI Layout Sheet",
+                                state: "Tamil Nadu",
+                                district: "Erode",
+                                area: "Vijayamangalam",
+                                ...INITIAL_MAP_DATA
+                            }
+                        ],
+                        bookings: [],
+                        videos: DEFAULT_PROMO_VIDEOS,
+                        settings: DEFAULT_SETTINGS
+                    };
+                    await saveFullDatabase(defaultDb);
+                    setDatabase(defaultDb);
+                } else {
+                    setDatabase(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch database from server", err);
+                showToast("Connection failed. Using offline cache.", "error");
+                
+                const savedDb = localStorage.getItem("aerostage_multilayouts_database");
+                if (savedDb) {
+                    try {
+                        setDatabase(JSON.parse(savedDb));
+                    } catch (e) {}
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadDatabase();
+    }, []);
 
     const [role, setRole] = useState(() => {
         const path = window.location.pathname;
@@ -302,7 +374,7 @@ export default function App() {
         }
     };
 
-    const handleRefImageChange = (e) => {
+    const handleRefImageChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -365,8 +437,28 @@ export default function App() {
                             name: file.name
                         }
                     }));
-                    showToast("PDF Layout successfully converted.", "success");
+                    showToast("PDF Layout successfully converted. Analyzing text...", "success");
                     runOcr(dataUrl, { x: fitX, y: fitY, width: fitW, height: fitH });
+
+                    // Background upload to Cloudinary
+                    try {
+                        const blob = await (await fetch(dataUrl)).blob();
+                        const imageFile = new File([blob], file.name.replace(/\.pdf$/i, '.png'), { type: 'image/png' });
+                        showToast("Uploading layout to cloud storage...", "info");
+                        const uploadResult = await uploadImage(imageFile);
+                        setMapData(prev => ({
+                            ...prev,
+                            backgroundImage: {
+                                ...prev.backgroundImage,
+                                href: uploadResult.url
+                            }
+                        }));
+                        showToast("Layout successfully stored in cloud!", "success");
+                    } catch (uploadErr) {
+                        console.error("Cloudinary upload failed:", uploadErr);
+                        showToast("Cloud storage upload failed. Image remains local.", "error");
+                    }
+
                 } catch (err) {
                     console.error("PDF parsing error", err);
                     showToast("Failed to render PDF page.", "error");
@@ -376,7 +468,7 @@ export default function App() {
         } else {
             const objectUrl = URL.createObjectURL(file);
             const img = new Image();
-            img.onload = () => {
+            img.onload = async () => {
                 const boxWidth = 1600;
                 const boxHeight = 1000;
                 const boxRatio = boxWidth / boxHeight;
@@ -410,6 +502,23 @@ export default function App() {
                 }));
                 showToast("Reference layout uploaded. Analyzing text...", "success");
                 runOcr(objectUrl, { x: fitX, y: fitY, width: fitW, height: fitH });
+
+                // Background upload to Cloudinary
+                try {
+                    showToast("Uploading layout to cloud storage...", "info");
+                    const uploadResult = await uploadImage(file);
+                    setMapData(prev => ({
+                        ...prev,
+                        backgroundImage: {
+                            ...prev.backgroundImage,
+                            href: uploadResult.url
+                        }
+                    }));
+                    showToast("Layout successfully stored in cloud!", "success");
+                } catch (uploadErr) {
+                    console.error("Cloudinary upload failed:", uploadErr);
+                    showToast("Cloud storage upload failed. Image remains local.", "error");
+                }
             };
             img.src = objectUrl;
         }
@@ -470,9 +579,19 @@ export default function App() {
         }, 3400); // Wait for transition out
     }, []);
 
+    const isInitialMountRef = useRef(true);
+
     useEffect(() => {
+        if (isLoading) return;
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            return;
+        }
+        saveFullDatabase(database).catch(err => {
+            console.error("Failed to save database to server:", err);
+        });
         localStorage.setItem("aerostage_multilayouts_database", JSON.stringify(database));
-    }, [database]);
+    }, [database, isLoading]);
 
     const { activeLayoutId, layouts } = database;
     const mapData = layouts.find(l => l.id === activeLayoutId) || layouts[0];
@@ -564,6 +683,20 @@ export default function App() {
             activeLayoutId: id
         }));
     }, []);
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-[#0f172a] text-white font-sans">
+                <div className="relative flex items-center justify-center">
+                    <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <Landmark className="absolute text-emerald-400" size={24} />
+                </div>
+                <h1 className="mt-6 text-xl font-medium tracking-wide text-slate-200">BCDI Real Estate Portal</h1>
+                <p className="mt-2 text-sm text-slate-400">Connecting to Cloud Database...</p>
+                <ToastContainer toasts={toasts} />
+            </div>
+        );
+    }
 
     return (
         <div data-theme={theme} style={{ display: 'flex', flex: 1, flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Video, Plus, Edit2, Trash2, Play, Pause, ChevronUp, ChevronDown, PlusCircle, Link, X } from 'lucide-react';
+import { Video, Plus, Edit2, Trash2, Play, Pause, ChevronUp, ChevronDown, PlusCircle, Link, X, Upload } from 'lucide-react';
+import { uploadVideo } from '../utils/api';
 
 export default function VideosManager({ 
     database, 
     setDatabase, 
     showToast 
 }) {
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
     const videos = database.videos || [];
     const [editingVideo, setEditingVideo] = useState(null); // null, 'add', or the video object itself
     const [videoForm, setVideoForm] = useState({
@@ -46,6 +49,38 @@ export default function VideosManager({
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         setVideoForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleVideoFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        setUploadProgress("Uploading video to cloud storage...");
+        try {
+            const res = await uploadVideo(file);
+            
+            let durationStr = "1:30";
+            if (res.duration) {
+                const totalSeconds = Math.round(res.duration);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                durationStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+
+            setVideoForm(prev => ({
+                ...prev,
+                url: res.url,
+                duration: durationStr
+            }));
+            showToast("Video uploaded successfully to Cloud Storage!", "success");
+        } catch (err) {
+            console.error("Video upload failed", err);
+            showToast(err.message || "Failed to upload video.", "error");
+        } finally {
+            setIsUploading(false);
+            setUploadProgress("");
+        }
     };
 
     // Save Video (Create or Update)
@@ -291,6 +326,25 @@ export default function VideosManager({
                                 />
                             </div>
 
+                             <div className="form-group">
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Upload Video File (Optional)</label>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    <input 
+                                        type="file" 
+                                        accept="video/*"
+                                        onChange={handleVideoFileChange}
+                                        disabled={isUploading}
+                                        style={{ flex: 1, padding: '8px', fontSize: '0.85rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                                    />
+                                </div>
+                                {isUploading && (
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--accent)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span>{uploadProgress}</span>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="form-group">
                                 <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Direct Video MP4 URL</label>
                                 <input 
@@ -302,7 +356,7 @@ export default function VideosManager({
                                     onChange={handleFormChange}
                                     style={{ width: '100%', padding: '10px', fontSize: '0.85rem', borderRadius: 'var(--radius-sm)', background: 'var(--bg-input)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                                 />
-                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Use direct static video hosting links (Mixkit, Pexels, or S3).</span>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Use direct static video hosting links (Mixkit, Pexels, or S3) or upload a file.</span>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
