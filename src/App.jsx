@@ -695,13 +695,113 @@ export default function App() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#0f172a] text-white font-sans">
-                <div className="relative flex items-center justify-center">
-                    <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                    <Landmark className="absolute text-emerald-400" size={24} />
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #0f1219 0%, #06080c 100%)',
+                color: '#ffffff',
+                fontFamily: "'Outfit', 'Inter', sans-serif",
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 9999
+            }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '28px' }}>
+                    {/* Glowing outer spin ring */}
+                    <div style={{
+                        width: '96px',
+                        height: '96px',
+                        borderRadius: '50%',
+                        border: '3px solid rgba(118, 153, 4, 0.08)',
+                        borderTop: '3px solid var(--primary, #769904)',
+                        animation: 'spin 1.2s linear infinite',
+                        position: 'absolute'
+                    }} />
+                    
+                    {/* Logo Container */}
+                    <div style={{
+                        width: '76px',
+                        height: '76px',
+                        borderRadius: '50%',
+                        background: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 24px rgba(118, 153, 4, 0.25)',
+                        overflow: 'hidden',
+                        zIndex: 2
+                    }}>
+                        <img 
+                            src="/logo.jpg" 
+                            alt="BCDI Logo" 
+                            style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'contain',
+                                padding: '4px'
+                            }} 
+                        />
+                    </div>
                 </div>
-                <h1 className="mt-6 text-xl font-medium tracking-wide text-slate-200">BCDI Real Estate Portal</h1>
-                <p className="mt-2 text-sm text-slate-400">Connecting to Cloud Database...</p>
+
+                <h1 style={{
+                    fontSize: '1.45rem',
+                    fontWeight: 700,
+                    letterSpacing: '1px',
+                    color: '#ffffff',
+                    margin: '0 0 6px 0',
+                    textTransform: 'uppercase',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                }}>
+                    BCDI PORTAL
+                </h1>
+                
+                <h2 style={{
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    color: 'var(--primary, #769904)',
+                    margin: '0 0 16px 0',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    opacity: 0.9
+                }}>
+                    Bharathi City Developers
+                </h2>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="loading-pulse-dots" style={{ display: 'flex', gap: '4px' }}>
+                        <div className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #769904)', animation: 'pulse-dot 1.4s infinite ease-in-out both' }}></div>
+                        <div className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #769904)', animation: 'pulse-dot 1.4s infinite ease-in-out both', animationDelay: '0.2s' }}></div>
+                        <div className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary, #769904)', animation: 'pulse-dot 1.4s infinite ease-in-out both', animationDelay: '0.4s' }}></div>
+                    </div>
+                    <p style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary, #94a3b8)',
+                        margin: 0,
+                        fontWeight: 500,
+                        letterSpacing: '0.2px'
+                    }}>
+                        Connecting to Cloud Database...
+                    </p>
+                </div>
+
+                {/* Inline CSS for keyframe animations (spin & pulse) */}
+                <style dangerouslySetInnerHTML={{__html: `
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    @keyframes pulse-dot {
+                        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+                        40% { transform: scale(1.1); opacity: 1; }
+                    }
+                `}} />
+
                 <ToastContainer toasts={toasts} />
             </div>
         );
