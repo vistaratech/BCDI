@@ -36,13 +36,35 @@ export default function UserPortal({
     theme,
     setRole
 }) {
-    const [activeTab, setActiveTab] = useState('home'); // 'home', 'layouts', 'locations', 'profile', 'settings'
-    const [selectedLocation, setSelectedLocation] = useState({
-        state: 'Tamil Nadu',
-        district: 'Erode',
-        layoutId: ''
+    const [activeTab, setActiveTab] = useState(() => {
+        return localStorage.getItem("bcdi_user_active_tab") || "home";
     });
-    const [isExploring, setIsExploring] = useState(false);
+    useEffect(() => {
+        localStorage.setItem("bcdi_user_active_tab", activeTab);
+    }, [activeTab]);
+
+    const [selectedLocation, setSelectedLocation] = useState(() => {
+        const saved = localStorage.getItem("bcdi_user_selected_location");
+        if (saved) {
+            try { return JSON.parse(saved); } catch(e) {}
+        }
+        return {
+            state: 'Tamil Nadu',
+            district: 'Erode',
+            layoutId: ''
+        };
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_user_selected_location", JSON.stringify(selectedLocation));
+    }, [selectedLocation]);
+
+    const [isExploring, setIsExploring] = useState(() => {
+        return localStorage.getItem("bcdi_user_is_exploring") === "true";
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_user_is_exploring", isExploring ? "true" : "false");
+    }, [isExploring]);
+
     const [userSelectedPlotId, setUserSelectedPlotId] = useState(null);
     const [bookingSuccess, setBookingSuccess] = useState(null);
     const [activeVideo, setActiveVideo] = useState(0);
@@ -73,10 +95,31 @@ export default function UserPortal({
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all'); // 'all', 'available', 'premium'
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+        return localStorage.getItem("bcdi_user_sidebar_collapsed") === "true";
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_user_sidebar_collapsed", sidebarCollapsed ? "true" : "false");
+    }, [sidebarCollapsed]);
 
-    const [layers, setLayers] = useState({ labels: true, roads: true, grids: false, statusColors: true });
-    const [currentTool, setCurrentTool] = useState("select");
+    const [layers, setLayers] = useState(() => {
+        const saved = localStorage.getItem("bcdi_user_layers");
+        if (saved) {
+            try { return JSON.parse(saved); } catch(e) {}
+        }
+        return { labels: true, roads: true, grids: false, statusColors: true };
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_user_layers", JSON.stringify(layers));
+    }, [layers]);
+
+    const [currentTool, setCurrentTool] = useState(() => {
+        return localStorage.getItem("bcdi_user_current_tool") || "select";
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_user_current_tool", currentTool);
+    }, [currentTool]);
+
     const [isLocked, setIsLocked] = useState(true);
 
     // User Booking form states

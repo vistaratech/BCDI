@@ -29,8 +29,8 @@ class VectorizerEngine {
         const origWidth = img.width;
         const origHeight = img.height;
 
-        // Scale canvas bounds to balance performance & accuracy (max width 1200)
-        const scale = Math.min(1200 / origWidth, 1.0);
+        // Scale canvas bounds to balance performance & accuracy (max width 2000 for better contour detection)
+        const scale = Math.min(2000 / origWidth, 1.0);
         const canvasW = Math.round(origWidth * scale);
         const canvasH = Math.round(origHeight * scale);
         this.canvas.width = canvasW;
@@ -96,13 +96,37 @@ class VectorizerEngine {
         if (hasOcr) {
             config.ocrWords.forEach(w => {
                 const text = w.text.trim();
-                const match = text.match(/^(?:plot|lot|p|l)?[-.]?(\d{1,4}[A-Za-z]?)$/i);
+                // Broadened regex: matches "Plot 1", "P-1", "lot.2", "No.3", "PL-4", "23", "123A" etc.
+                const match = text.match(/^(?:plot|lot|no|p|l|pl)?[-.:\s]*(\d{1,4}[A-Za-z]?)$/i);
                 if (match) {
                     plotOcrWords.push({
                         text: `PLOT ${match[1]}`,
                         svgX: config.bgX + (w.x / origWidth) * config.bgWidth,
-                        svgY: config.bgY + (w.y / origHeight) * config.bgHeight
+                        svgY: config.bgY + (w.y / origHeight) * config.bgHeight,
+                        confidence: w.confidence || 50
                     });
+                }
+            });
+            
+            // Fallback: also match bare standalone numbers (1-4 digits) that didn't match above
+            // These are common in CAD layouts where plot numbers have no prefix
+            config.ocrWords.forEach(w => {
+                const text = w.text.trim();
+                if (/^\d{1,4}[A-Za-z]?$/.test(text)) {
+                    const svgX = config.bgX + (w.x / origWidth) * config.bgWidth;
+                    const svgY = config.bgY + (w.y / origHeight) * config.bgHeight;
+                    // Avoid duplicates: check if this coordinate is already registered
+                    const isDuplicate = plotOcrWords.some(existing => 
+                        Math.abs(existing.svgX - svgX) < 10 && Math.abs(existing.svgY - svgY) < 10
+                    );
+                    if (!isDuplicate) {
+                        plotOcrWords.push({
+                            text: `PLOT ${text}`,
+                            svgX: svgX,
+                            svgY: svgY,
+                            confidence: w.confidence || 50
+                        });
+                    }
                 }
             });
         }
@@ -163,9 +187,10 @@ class VectorizerEngine {
                 }
             }
 
-            // Fallback strategy: Proximity match (nearest unused OCR word within 3% of map diagonal)
+            // Fallback strategy: Proximity match (nearest unused OCR word within 5% of map diagonal)
+            // Increased from 3% to 5% to handle OCR coordinate drift from preprocessing
             if (!matchedText) {
-                const maxDist = Math.hypot(config.bgWidth, config.bgHeight) * 0.03;
+                const maxDist = Math.hypot(config.bgWidth, config.bgHeight) * 0.05;
                 for (let i = 0; i < plotOcrWords.length; i++) {
                     if (matchedOcrIndices.has(i)) continue; // Skip already-claimed words
                     const ocr = plotOcrWords[i];

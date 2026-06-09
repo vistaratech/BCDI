@@ -160,7 +160,15 @@ export default function App() {
                     await saveFullDatabase(defaultDb);
                     setDatabase(defaultDb);
                 } else {
-                    setDatabase(data);
+                    const savedActiveId = localStorage.getItem("bcdi_active_layout_id");
+                    if (savedActiveId && data.layouts.some(l => l.id === savedActiveId)) {
+                        setDatabase({
+                            ...data,
+                            activeLayoutId: savedActiveId
+                        });
+                    } else {
+                        setDatabase(data);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to fetch database from server", err);
@@ -189,10 +197,21 @@ export default function App() {
         }
         return "user";
     });
-    const [adminTab, setAdminTab] = useState("dashboard"); // "dashboard", "layouts", "plots", "bookings", "videos", "clients", "reports", "settings"
+    const [adminTab, setAdminTab] = useState(() => {
+        return localStorage.getItem("bcdi_admin_tab") || "dashboard";
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_admin_tab", adminTab);
+    }, [adminTab]);
 
     const [selectedPlotId, setSelectedPlotId] = useState(null);
-    const [currentTool, setCurrentTool] = useState("select");
+    const [currentTool, setCurrentTool] = useState(() => {
+        return localStorage.getItem("bcdi_admin_current_tool") || "select";
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_admin_current_tool", currentTool);
+    }, [currentTool]);
+
     const [activeFilter, setActiveFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [theme, setTheme] = useState(() => {
@@ -245,7 +264,16 @@ export default function App() {
     const [isLocked, setIsLocked] = useState(false);
     const [navCollapsed, setNavCollapsed] = useState(false);
     const [layoutsMenuExpanded, setLayoutsMenuExpanded] = useState(true);
-    const [layers, setLayers] = useState({ labels: true, roads: true, grids: true, statusColors: true });
+    const [layers, setLayers] = useState(() => {
+        const saved = localStorage.getItem("bcdi_admin_layers");
+        if (saved) {
+            try { return JSON.parse(saved); } catch(e) {}
+        }
+        return { labels: true, roads: true, grids: true, statusColors: true };
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_admin_layers", JSON.stringify(layers));
+    }, [layers]);
     const [editMode, setEditMode] = useState(false);
     
     const [toasts, setToasts] = useState([]);
@@ -261,9 +289,29 @@ export default function App() {
     const [ocrStatus, setOcrStatus] = useState("");
     
     // Vectorizer settings default values
-    const [vecThreshold, setVecThreshold] = useState(165);
-    const [vecDilation, setVecDilation] = useState(2);
-    const [vecSimplify, setVecSimplify] = useState(3.5);
+    const [vecThreshold, setVecThreshold] = useState(() => {
+        const saved = localStorage.getItem("bcdi_vec_threshold");
+        return saved ? parseInt(saved) : 165;
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_vec_threshold", vecThreshold);
+    }, [vecThreshold]);
+
+    const [vecDilation, setVecDilation] = useState(() => {
+        const saved = localStorage.getItem("bcdi_vec_dilation");
+        return saved ? parseInt(saved) : 2;
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_vec_dilation", vecDilation);
+    }, [vecDilation]);
+
+    const [vecSimplify, setVecSimplify] = useState(() => {
+        const saved = localStorage.getItem("bcdi_vec_simplify");
+        return saved ? parseFloat(saved) : 3.5;
+    });
+    useEffect(() => {
+        localStorage.setItem("bcdi_vec_simplify", vecSimplify);
+    }, [vecSimplify]);
 
     const ocrWorkerRef = useRef(null);
 
@@ -319,7 +367,159 @@ export default function App() {
         }
     };
 
-    // OCR analysis scan using Tesseract
+    // ──── Image Preprocessing: Upscale + Contrast Boost + Sharpen for better OCR ────
+    const preprocessImageForOcr = (imageSrc) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                // Upscale to at least 2500px wide for better text clarity on CAD layouts
+                const scaleFactor = Math.max(2.0, 2500 / img.width);
+                const w = Math.round(img.width * scaleFactor);
+                const h = Math.round(img.height * scaleFactor);
+
+                const canvas = document.createElement("canvas");
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+                // Draw upscaled image
+                ctx.drawImage(img, 0, 0, w, h);
+
+                // ── Step 1: Contrast Enhancement (histogram stretch) ──
+                let imgData = ctx.getImageData(0, 0, w, h);
+                const data = imgData.data;
+                let minLum = 255, maxLum = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    const lum = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                    if (lum < minLum) minLum = lum;
+                    if (lum > maxLum) maxLum = lum;
+                }
+                const range = maxLum - minLum || 1;
+                // Increase contrast by stretching luminance range
+                const contrastBoost = 1.6; // 60% more contrast
+                for (let i = 0; i < data.length; i += 4) {
+                    for (let c = 0; c < 3; c++) {
+                        let val = ((data[i+c] - minLum) / range) * 255;
+                        val = ((val - 128) * contrastBoost) + 128; // contrast curve
+                        data[i+c] = Math.max(0, Math.min(255, Math.round(val)));
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+
+                // ── Step 2: Unsharp Mask Sharpening ──
+                // Create blurred version then subtract from original
+                const blurCanvas = document.createElement("canvas");
+                blurCanvas.width = w;
+                blurCanvas.height = h;
+                const blurCtx = blurCanvas.getContext("2d");
+                blurCtx.filter = "blur(1.5px)";
+                blurCtx.drawImage(canvas, 0, 0);
+                const blurData = blurCtx.getImageData(0, 0, w, h).data;
+                
+                imgData = ctx.getImageData(0, 0, w, h);
+                const sharpData = imgData.data;
+                const sharpAmount = 1.8; // Sharpening strength
+                for (let i = 0; i < sharpData.length; i += 4) {
+                    for (let c = 0; c < 3; c++) {
+                        const diff = sharpData[i+c] - blurData[i+c];
+                        sharpData[i+c] = Math.max(0, Math.min(255, Math.round(sharpData[i+c] + diff * sharpAmount)));
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+
+                // ── Step 3: Adaptive Binarization for text clarity ──
+                imgData = ctx.getImageData(0, 0, w, h);
+                const binData = imgData.data;
+                for (let i = 0; i < binData.length; i += 4) {
+                    const gray = 0.299 * binData[i] + 0.587 * binData[i+1] + 0.114 * binData[i+2];
+                    // High-contrast binarization threshold to make text black on white
+                    const bw = gray < 140 ? 0 : 255;
+                    binData[i] = binData[i+1] = binData[i+2] = bw;
+                }
+                ctx.putImageData(imgData, 0, 0);
+
+                console.log(`[OCR Preprocess] Upscaled ${img.width}x${img.height} → ${w}x${h} (${scaleFactor.toFixed(1)}x), contrast+sharpen+binarize applied`);
+                resolve(canvas.toDataURL("image/png"));
+            };
+            img.onerror = () => reject(new Error("Failed to load image for OCR preprocessing"));
+            img.src = imageSrc;
+        });
+    };
+
+    // ──── Merge fragmented OCR digits that Tesseract splits ────
+    // e.g. "1" + "2" + "3" on same Y-line → "123"
+    const mergeFragmentedDigits = (words) => {
+        if (!words || words.length === 0) return words;
+        
+        // Sort by Y then X to process left-to-right, top-to-bottom
+        const sorted = [...words].sort((a, b) => {
+            const yDiff = a.y - b.y;
+            if (Math.abs(yDiff) > 15) return yDiff; // different line
+            return a.x - b.x; // same line, sort by X
+        });
+        
+        const merged = [];
+        let i = 0;
+        while (i < sorted.length) {
+            const current = { ...sorted[i] };
+            
+            // Only merge single/double digits that look like fragments
+            if (/^\d{1,2}$/.test(current.text.trim())) {
+                let combinedText = current.text.trim();
+                let combinedBbox = { ...current.bbox };
+                let lastX = current.bbox.x1;
+                let lastY = current.y;
+                let j = i + 1;
+                
+                while (j < sorted.length) {
+                    const next = sorted[j];
+                    const nextText = next.text.trim();
+                    
+                    // Check if next word is also a digit fragment, on same Y line, and close horizontally
+                    const charWidth = (current.bbox.x1 - current.bbox.x0) / Math.max(current.text.trim().length, 1);
+                    const gapThreshold = charWidth * 2.5; // Allow gap up to 2.5x character width
+                    const yThreshold = (current.bbox.y1 - current.bbox.y0) * 0.6;
+                    
+                    if (/^\d{1,2}$/.test(nextText) &&
+                        Math.abs(next.y - lastY) < yThreshold &&
+                        (next.bbox.x0 - lastX) < gapThreshold &&
+                        (next.bbox.x0 - lastX) > -charWidth) {
+                        combinedText += nextText;
+                        combinedBbox.x1 = next.bbox.x1;
+                        combinedBbox.y0 = Math.min(combinedBbox.y0, next.bbox.y0);
+                        combinedBbox.y1 = Math.max(combinedBbox.y1, next.bbox.y1);
+                        lastX = next.bbox.x1;
+                        j++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                if (j > i + 1 && combinedText.length >= 1 && combinedText.length <= 4) {
+                    // Successfully merged fragments
+                    merged.push({
+                        text: combinedText,
+                        x: (combinedBbox.x0 + combinedBbox.x1) / 2,
+                        y: (combinedBbox.y0 + combinedBbox.y1) / 2,
+                        bbox: combinedBbox,
+                        confidence: current.confidence,
+                        _merged: true
+                    });
+                    console.log(`[OCR Merge] Fragments merged: "${sorted.slice(i, j).map(w => w.text).join('" + "')}" → "${combinedText}"`);
+                    i = j;
+                    continue;
+                }
+            }
+            
+            merged.push(current);
+            i++;
+        }
+        
+        return merged;
+    };
+
+    // OCR analysis scan using Tesseract (Optimized: preprocessing + better config)
     const runOcr = async (imageSrc, fitBounds = null) => {
         if (!window.Tesseract) {
             showToast("OCR engine (Tesseract.js) is not loaded yet.", "error");
@@ -327,9 +527,13 @@ export default function App() {
         }
         setOcrLoading(true);
         setOcrProgress(0);
-        setOcrStatus("Scanning layout...");
+        setOcrStatus("Preprocessing image...");
         
         try {
+            // ── Preprocess: upscale, contrast, sharpen, binarize ──
+            const preprocessedSrc = await preprocessImageForOcr(imageSrc);
+            setOcrStatus("Starting OCR engine...");
+
             const worker = await window.Tesseract.createWorker({
                 logger: m => {
                     if (m.status === "recognizing text") {
@@ -346,36 +550,75 @@ export default function App() {
             await worker.loadLanguage('eng');
             await worker.initialize('eng');
             
+            // Optimized Tesseract parameters for CAD layout text:
+            // PSM 6 = Assume uniform block of text (better for structured layouts)
+            // PSM 11 was splitting sequential numbers into individual digits
             await worker.setParameters({
-                tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/-+ ',
-                tessedit_pageseg_mode: '11',
+                tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./-:No ',
+                tessedit_pageseg_mode: '6',
             });
             
-            const { data } = await worker.recognize(imageSrc);
+            // Run OCR on preprocessed (upscaled + contrast-boosted + sharpened) image
+            const { data } = await worker.recognize(preprocessedSrc);
             
             // If user cancelled while recognizing
             if (!ocrWorkerRef.current) {
                 await worker.terminate();
                 return;
             }
+
+            // ── Parse & scale coordinates back to ORIGINAL image space ──
+            // preprocessedSrc is upscaled, so we need to map bbox coordinates back
+            const preImg = new Image();
+            const preImgLoaded = new Promise(res => { preImg.onload = () => res(); });
+            preImg.src = preprocessedSrc;
+            await preImgLoaded;
+            const preW = preImg.width;
+            const preH = preImg.height;
             
-            const parsedWords = data.words
-                .filter(w => w.confidence > 25)
+            // Get original image dimensions
+            const origImg = new Image();
+            const origImgLoaded = new Promise(res => { origImg.crossOrigin = "anonymous"; origImg.onload = () => res(); });
+            origImg.src = imageSrc;
+            await origImgLoaded;
+            const origW = origImg.width;
+            const origH = origImg.height;
+            
+            const scaleBackX = origW / preW;
+            const scaleBackY = origH / preH;
+            
+            // Lower confidence threshold from 25 to 15 — CAD text is often low-confidence
+            let parsedWords = data.words
+                .filter(w => w.confidence > 15 && w.text.trim().length > 0)
                 .map(w => ({
                     text: w.text.trim(),
-                    x: (w.bbox.x0 + w.bbox.x1) / 2,
-                    y: (w.bbox.y0 + w.bbox.y1) / 2,
-                    bbox: { x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1 },
+                    x: ((w.bbox.x0 + w.bbox.x1) / 2) * scaleBackX,
+                    y: ((w.bbox.y0 + w.bbox.y1) / 2) * scaleBackY,
+                    bbox: {
+                        x0: w.bbox.x0 * scaleBackX,
+                        y0: w.bbox.y0 * scaleBackY,
+                        x1: w.bbox.x1 * scaleBackX,
+                        y1: w.bbox.y1 * scaleBackY
+                    },
                     confidence: w.confidence
                 }));
             
-            const plotNumberCount = parsedWords.filter(w => /^(?:plot|lot|p|l)?[-.]?(\d{1,4}[A-Za-z]?)$/i.test(w.text)).length;
+            // ── Merge fragmented digits ("1" + "2" → "12") ──
+            parsedWords = mergeFragmentedDigits(parsedWords);
+            
+            // Broadened regex: match more plot number patterns
+            const plotRegex = /^(?:plot|lot|no|p|l|pl)?[-.:\s]*(\d{1,4}[A-Za-z]?)$/i;
+            const plotNumberCount = parsedWords.filter(w => plotRegex.test(w.text)).length;
+            
+            console.log(`[OCR] Raw words: ${data.words.length}, Filtered: ${parsedWords.length}, Plot numbers: ${plotNumberCount}`);
+            console.log(`[OCR] Detected texts:`, parsedWords.map(w => `"${w.text}" (${w.confidence.toFixed(0)}%)`).join(', '));
+            
             setOcrWords(parsedWords);
-            showToast(`Layout analysis complete. Found ${plotNumberCount} plot numbers.`, "success");
+            showToast(`Layout analysis complete. Found ${plotNumberCount} plot numbers from ${parsedWords.length} detected words.`, "success");
             await worker.terminate();
             ocrWorkerRef.current = null;
             
-            // Auto run vectorization
+            // Auto run vectorization with ORIGINAL image (not preprocessed)
             await runAutoVectorization(imageSrc, parsedWords, fitBounds);
         } catch (err) {
             console.error("OCR analysis failure", err);
@@ -671,6 +914,7 @@ export default function App() {
                 layouts: [...prevDb.layouts, newLayout]
             };
         });
+        localStorage.setItem("bcdi_active_layout_id", newLayoutId);
         showToast(`Layout "${name}" created successfully.`, "success");
     }, [showToast]);
 
@@ -707,6 +951,7 @@ export default function App() {
             if (prevDb.activeLayoutId === id) {
                 nextActiveId = newLayouts[0].id;
             }
+            localStorage.setItem("bcdi_active_layout_id", nextActiveId);
             return {
                 activeLayoutId: nextActiveId,
                 layouts: newLayouts
@@ -720,6 +965,7 @@ export default function App() {
             ...prevDb,
             activeLayoutId: id
         }));
+        localStorage.setItem("bcdi_active_layout_id", id);
     }, []);
 
     if (isLoading) {

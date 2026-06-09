@@ -12,10 +12,14 @@ class MapRenderer {
         this.onPlotUpdated = onPlotUpdated;
         this.onZoomChange = onZoomChange;
 
-        // Viewport transformations state
-        this.zoom = 0.9;
-        this.panX = 100;
-        this.panY = 60;
+        // Viewport transformations state (Persist across refreshes)
+        const savedZoom = localStorage.getItem("bcdi_viewport_zoom");
+        const savedPanX = localStorage.getItem("bcdi_viewport_panx");
+        const savedPanY = localStorage.getItem("bcdi_viewport_pany");
+        
+        this.zoom = savedZoom ? parseFloat(savedZoom) : 0.9;
+        this.panX = savedPanX ? parseFloat(savedPanX) : 100;
+        this.panY = savedPanY ? parseFloat(savedPanY) : 60;
         this.isPanning = false;
         this.panStartX = 0;
         this.panStartY = 0;
@@ -282,6 +286,10 @@ class MapRenderer {
 
     updateTransform() {
         this.viewport.setAttribute("transform", `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`);
+        
+        localStorage.setItem("bcdi_viewport_zoom", this.zoom);
+        localStorage.setItem("bcdi_viewport_panx", this.panX);
+        localStorage.setItem("bcdi_viewport_pany", this.panY);
         
         // Hide/Show details on zooming states using dynamic CSS helper classes
         if (this.zoom < 0.45) {
