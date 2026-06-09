@@ -1294,7 +1294,10 @@ export default function App() {
                                 {!navCollapsed && (
                                     <>
                                         <div className="nav-profile-info">
-                                            <div className="nav-profile-title">BCDI Developers</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <div className="nav-profile-title">BCDI Developers</div>
+                                                <span style={{ fontSize: '0.58rem', background: 'rgba(99, 102, 241, 0.15)', color: 'var(--primary)', padding: '1px 4px', borderRadius: '3px', fontWeight: 600 }}>v1.0</span>
+                                            </div>
                                             <div className="nav-profile-subtitle">growth is life...</div>
                                         </div>
                                         <ChevronDown size={16} className="nav-profile-chevron" />

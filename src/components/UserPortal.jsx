@@ -423,7 +423,10 @@ export default function UserPortal({
                             <img src="/logo.jpg" alt="BCDI Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.5px', lineHeight: '1.2' }}>BCDI PORTAL</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.5px', lineHeight: '1.2' }}>BCDI PORTAL</span>
+                                <span style={{ fontSize: '0.58rem', background: 'rgba(99, 102, 241, 0.15)', color: 'var(--primary)', padding: '1px 4px', borderRadius: '3px', fontWeight: 600 }}>v1.0</span>
+                            </div>
                             <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500 }}>Bharathi City Developers</span>
                         </div>
                     </div>
