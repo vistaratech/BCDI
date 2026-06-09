@@ -339,10 +339,18 @@ export default function UserPortal({
         });
     };
 
+    const normalizePhone = (phone) => {
+        if (!phone) return "";
+        const digits = phone.replace(/\D/g, '');
+        return digits.slice(-10);
+    };
+
     // Filter bookings matching active user
     const userBookings = useMemo(() => {
         if (!activeUserPhone) return [];
-        return (database.bookings || []).filter(b => b.customerPhone === activeUserPhone);
+        const target = normalizePhone(activeUserPhone);
+        if (!target) return [];
+        return (database.bookings || []).filter(b => normalizePhone(b.customerPhone) === target);
     }, [database.bookings, activeUserPhone]);
 
     const activeUserName = useMemo(() => {
@@ -357,13 +365,14 @@ export default function UserPortal({
 
     const handleSearchBookingsByPhone = (e) => {
         e.preventDefault();
-        if (!searchPhone.trim()) return;
         const trimmedPhone = searchPhone.trim();
+        if (!trimmedPhone) return;
         localStorage.setItem('bcdi_user_session_phone', trimmedPhone);
         setActiveUserPhone(trimmedPhone);
 
-        // Auto-extract name if bookings match
-        const matchingBookings = (database.bookings || []).filter(b => b.customerPhone === trimmedPhone);
+        // Auto-extract name if bookings match (normalized last 10 digits)
+        const target = normalizePhone(trimmedPhone);
+        const matchingBookings = (database.bookings || []).filter(b => normalizePhone(b.customerPhone) === target);
         if (matchingBookings.length > 0) {
             const sorted = [...matchingBookings].sort((a, b) => b.date.localeCompare(a.date));
             const name = sorted[0].customerName;

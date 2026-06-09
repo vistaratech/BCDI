@@ -129,13 +129,11 @@ async function saveFullDatabase(data) {
     try {
         await client.query('BEGIN');
 
-        // --- Clear existing data ---
+        // --- Clear existing data (Only layout structures) ---
         await client.query('DELETE FROM hatches');
         await client.query('DELETE FROM roads');
         await client.query('DELETE FROM plots');
         await client.query('DELETE FROM layouts');
-        await client.query('DELETE FROM bookings');
-        await client.query('DELETE FROM videos');
 
         // --- Insert layouts + children ---
         for (const layout of (data.layouts || [])) {
@@ -181,23 +179,40 @@ async function saveFullDatabase(data) {
             }
         }
 
-        // --- Insert bookings ---
+        // --- Insert/Update bookings (Upsert style to prevent overwriting concurrent bookings) ---
         for (const b of (data.bookings || [])) {
             await client.query(
                 `INSERT INTO bookings (id, layout_id, layout_name, plot_id, customer_name, customer_phone, customer_email, amount_paid, booking_date, status)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                 ON CONFLICT (id) DO UPDATE SET
+                    layout_id = EXCLUDED.layout_id,
+                    layout_name = EXCLUDED.layout_name,
+                    plot_id = EXCLUDED.plot_id,
+                    customer_name = EXCLUDED.customer_name,
+                    customer_phone = EXCLUDED.customer_phone,
+                    customer_email = EXCLUDED.customer_email,
+                    amount_paid = EXCLUDED.amount_paid,
+                    booking_date = EXCLUDED.booking_date,
+                    status = EXCLUDED.status`,
                 [b.id, b.layoutId, b.layoutName || '', b.plotId, b.customerName,
                  b.customerPhone, b.customerEmail || '', b.amountPaid || 0,
                  b.date || new Date().toISOString(), b.status || 'pending']
             );
         }
 
-        // --- Insert videos ---
+        // --- Insert/Update videos (Upsert style to prevent deletion of other videos) ---
         for (let i = 0; i < (data.videos || []).length; i++) {
             const v = data.videos[i];
             await client.query(
                 `INSERT INTO videos (id, title, description, url, duration, tag, sort_order)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+                 VALUES ($1,$2,$3,$4,$5,$6,$7)
+                 ON CONFLICT (id) DO UPDATE SET
+                    title = EXCLUDED.title,
+                    description = EXCLUDED.description,
+                    url = EXCLUDED.url,
+                    duration = EXCLUDED.duration,
+                    tag = EXCLUDED.tag,
+                    sort_order = EXCLUDED.sort_order`,
                 [v.id, v.title, v.description || '', v.url, v.duration || '0:00', v.tag || '', i]
             );
         }
